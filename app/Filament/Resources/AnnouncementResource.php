@@ -180,14 +180,16 @@ class AnnouncementResource extends Resource
      * Nama file aman untuk lampiran PDF.
      *
      * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
-     * berbahaya) lalu diberi suffix acak agar unik di disk.
+     * berbahaya) lalu diberi suffix acak agar unik di disk. Ekstensi
+     * SELALU dipaksa `.pdf` — ekstensi dari client tidak dipercaya agar
+     * file polyglot ber-ekstensi berbahaya (mis. `.php`) tidak dapat
+     * dieksekusi web server.
      */
     public static function safeStoredFileName(string $originalName): string
     {
         $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
         $safeName = $safeName !== '' ? $safeName : 'lampiran';
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION)) ?: 'pdf';
 
-        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.'.$extension;
+        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.pdf';
     }
 }

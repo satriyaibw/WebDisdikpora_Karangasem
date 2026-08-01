@@ -75,19 +75,29 @@ class RolePermissionSeederTest extends TestCase
         );
     }
 
-    public function test_ppid_and_layanan_roles_only_get_panel_access(): void
+    public function test_ppid_role_gets_panel_access_and_ppid_permissions(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
-        foreach (['admin_ppid_sop', 'admin_layanan_publik'] as $roleName) {
-            $role = Role::where('name', $roleName)->first();
+        $role = Role::where('name', 'admin_ppid_sop')->first();
 
-            $this->assertEqualsCanonicalizing(
-                ['panel.access'],
-                $role->permissions->pluck('name')->all(),
-                "Role {$roleName} hanya boleh memiliki panel.access."
-            );
-        }
+        $this->assertEqualsCanonicalizing(
+            array_merge(['panel.access'], RolePermissionSeeder::PPID_PERMISSIONS),
+            $role->permissions->pluck('name')->all()
+        );
+    }
+
+    public function test_layanan_role_only_gets_panel_access(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $role = Role::where('name', 'admin_layanan_publik')->first();
+
+        $this->assertEqualsCanonicalizing(
+            ['panel.access'],
+            $role->permissions->pluck('name')->all(),
+            'Role admin_layanan_publik hanya boleh memiliki panel.access.'
+        );
     }
 
     public function test_admin_seeder_user_gets_super_admin_role(): void

@@ -14,6 +14,7 @@ class RolePermissionSeeder extends Seeder
      * Daftar permission baseline dengan konvensi `{modul}.{aksi}`.
      * Fase 2: manajemen user/role/permission & audit log.
      * Fase 3: modul konten (berita, pengumuman, agenda, slider, galeri).
+     * Fase 4: modul repositori dokumen PPID.
      */
     public const PERMISSIONS = [
         'panel.access',
@@ -62,6 +63,10 @@ class RolePermissionSeeder extends Seeder
         'video.create',
         'video.update',
         'video.delete',
+        'ppid.read',
+        'ppid.create',
+        'ppid.update',
+        'ppid.delete',
     ];
 
     /**
@@ -103,6 +108,16 @@ class RolePermissionSeeder extends Seeder
     ];
 
     /**
+     * Permission modul PPID (Fase 4) yang dimiliki Admin PPID & SOP.
+     */
+    public const PPID_PERMISSIONS = [
+        'ppid.read',
+        'ppid.create',
+        'ppid.update',
+        'ppid.delete',
+    ];
+
+    /**
      * Mapping label Bahasa Indonesia untuk setiap role.
      */
     public const ROLE_LABELS = [
@@ -124,7 +139,7 @@ class RolePermissionSeeder extends Seeder
         $roles = [
             'super_admin' => self::PERMISSIONS,
             'admin_redaksi_berita' => array_merge(['panel.access'], self::CONTENT_PERMISSIONS),
-            'admin_ppid_sop' => ['panel.access'],
+            'admin_ppid_sop' => array_merge(['panel.access'], self::PPID_PERMISSIONS),
             'admin_layanan_publik' => ['panel.access'],
         ];
 
