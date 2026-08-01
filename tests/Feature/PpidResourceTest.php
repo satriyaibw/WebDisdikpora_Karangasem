@@ -253,6 +253,54 @@ class PpidResourceTest extends TestCase
         $this->assertTrue(Storage::disk('public')->exists($document->file_path));
     }
 
+    public function test_document_filename_never_keeps_non_pdf_extension(): void
+    {
+        foreach (['evil.pdf.php', 'laporan.exe', 'skrip.php', 'dokumen'] as $originalName) {
+            $stored = PpidDocumentResource::safeStoredFileName($originalName);
+
+            $this->assertStringEndsWith('.pdf', $stored, "Nama asli '{$originalName}' harus berakhiran .pdf.");
+            $this->assertStringNotContainsString('.php', $stored);
+            $this->assertStringNotContainsString('.exe', $stored);
+            $this->assertSame(1, substr_count($stored, '.'));
+        }
+    }
+
+    public function test_replacing_file_path_on_update_removes_old_pdf(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $category = PpidCategory::where('slug', 'informasi-berkala')->firstOrFail();
+
+        $oldPath = 'lampiran/ppid/lama.pdf';
+        Storage::disk('public')->put($oldPath, '%PDF-1.4 (lama)');
+
+        $document = PpidDocument::create([
+            'title' => 'Ganti Berkas',
+            'file_path' => $oldPath,
+            'file_size' => Storage::disk('public')->size($oldPath),
+            'category_id' => $category->id,
+            'status' => PpidDocument::STATUS_DRAFT,
+        ]);
+
+        $newPath = 'lampiran/ppid/baru.pdf';
+        Storage::disk('public')->put($newPath, '%PDF-1.4 (baru)');
+
+        $document->update([
+            'file_path' => $newPath,
+            'file_size' => Storage::disk('public')->size($newPath),
+        ]);
+
+        $this->assertTrue(Storage::disk('public')->exists($newPath));
+        $this->assertFalse(Storage::disk('public')->exists($oldPath), 'Berkas lama harus terhapus saat diganti.');
+        $this->assertDatabaseHas('audit_logs', [
+            'model_type' => PpidDocument::class,
+            'model_id' => $document->id,
+            'action' => 'update',
+            'user_id' => $admin->id,
+        ]);
+    }
+
     public function test_deleting_document_removes_pdf_from_disk(): void
     {
         $admin = $this->getSeededAdmin();

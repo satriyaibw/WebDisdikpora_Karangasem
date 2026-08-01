@@ -4,7 +4,6 @@ namespace App\Filament\Resources\PpidDocumentResource\Pages;
 
 use App\Filament\Resources\PpidDocumentResource;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Storage;
 
 class CreatePpidDocument extends CreateRecord
 {
@@ -15,15 +14,10 @@ class CreatePpidDocument extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        return $this->fillFileSize($data);
-    }
-
-    private function fillFileSize(array $data): array
-    {
         if (! empty($data['file_path'])) {
-            $size = Storage::disk('public')->size($data['file_path']);
+            $size = PpidDocumentResource::resolveStoredFileSize($data['file_path']);
 
-            if ($size !== false) {
+            if ($size !== null) {
                 $data['file_size'] = $size;
             }
         }

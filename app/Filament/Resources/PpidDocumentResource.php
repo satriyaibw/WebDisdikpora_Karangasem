@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -194,6 +195,14 @@ class PpidDocumentResource extends Resource
                     ->options(fn (): array => self::yearOptions()),
             ])
             ->actions([
+                Tables\Actions\Action::make('download')
+                    ->label('Unduh PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (PpidDocument $record): ?string => Storage::disk('public')->exists($record->file_path)
+                        ? Storage::disk('public')->url($record->file_path)
+                        : null)
+                    ->openUrlInNewTab()
+                    ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -215,18 +224,34 @@ class PpidDocumentResource extends Resource
     }
 
     /**
+     * Ukuran berkas (byte) dari path di disk `public`, atau null bila tidak terbaca.
+     */
+    public static function resolveStoredFileSize(string $path): ?int
+    {
+        try {
+            $size = Storage::disk('public')->size($path);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $size === false ? null : $size;
+    }
+
+    /**
      * Nama file aman untuk dokumen PDF.
      *
      * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
-     * berbahaya) lalu diberi suffix acak agar unik di disk.
+     * berbahaya) lalu diberi suffix acak agar unik di disk. Ekstensi
+     * SELALU dipaksa `.pdf` — ekstensi dari client tidak dipercaya agar
+     * file polyglot ber-ekstensi berbahaya (mis. `.php`) tidak dapat
+     * dieksekusi web server.
      */
     public static function safeStoredFileName(string $originalName): string
     {
         $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
         $safeName = $safeName !== '' ? $safeName : 'dokumen';
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION)) ?: 'pdf';
 
-        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.'.$extension;
+        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.pdf';
     }
 
     /**

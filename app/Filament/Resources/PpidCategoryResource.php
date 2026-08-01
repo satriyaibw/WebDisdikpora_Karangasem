@@ -66,6 +66,7 @@ class PpidCategoryResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Kategori')
                             ->required()
+                            ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Forms\Components\TextInput $component, Forms\Set $set, ?string $state) => $set('slug', Str::slug((string) $state))),

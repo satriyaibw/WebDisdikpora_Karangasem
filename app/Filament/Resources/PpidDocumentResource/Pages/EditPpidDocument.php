@@ -5,7 +5,6 @@ namespace App\Filament\Resources\PpidDocumentResource\Pages;
 use App\Filament\Resources\PpidDocumentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Storage;
 
 class EditPpidDocument extends EditRecord
 {
@@ -24,9 +23,9 @@ class EditPpidDocument extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if (! empty($data['file_path'])) {
-            $size = Storage::disk('public')->size($data['file_path']);
+            $size = PpidDocumentResource::resolveStoredFileSize($data['file_path']);
 
-            if ($size !== false) {
+            if ($size !== null) {
                 $data['file_size'] = $size;
             }
         }
