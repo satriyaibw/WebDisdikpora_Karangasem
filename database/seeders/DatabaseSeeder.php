@@ -19,6 +19,10 @@ class DatabaseSeeder extends Seeder
         $this->call(RolePermissionSeeder::class);
         $this->call(CategorySeeder::class);
         $this->call(PpidSeeder::class);
+        $this->call(BidangSeeder::class);
+        $this->call(ServiceSeeder::class);
+        $this->call(SopSeeder::class);
+        $this->call(DownloadFileSeeder::class);
     }
 
     private function seedAdminUser(): void

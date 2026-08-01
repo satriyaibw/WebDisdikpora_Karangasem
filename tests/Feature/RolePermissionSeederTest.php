@@ -75,29 +75,48 @@ class RolePermissionSeederTest extends TestCase
         );
     }
 
-    public function test_ppid_role_gets_panel_access_and_ppid_permissions(): void
+    public function test_ppid_role_gets_panel_access_ppid_and_sop_permissions(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
         $role = Role::where('name', 'admin_ppid_sop')->first();
 
         $this->assertEqualsCanonicalizing(
-            array_merge(['panel.access'], RolePermissionSeeder::PPID_PERMISSIONS),
+            array_merge(['panel.access'], RolePermissionSeeder::PPID_PERMISSIONS, RolePermissionSeeder::SOP_PERMISSIONS),
             $role->permissions->pluck('name')->all()
         );
     }
 
-    public function test_layanan_role_only_gets_panel_access(): void
+    public function test_layanan_role_gets_panel_access_layanan_and_unduhan_permissions(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
         $role = Role::where('name', 'admin_layanan_publik')->first();
 
         $this->assertEqualsCanonicalizing(
-            ['panel.access'],
-            $role->permissions->pluck('name')->all(),
-            'Role admin_layanan_publik hanya boleh memiliki panel.access.'
+            array_merge(['panel.access'], RolePermissionSeeder::LAYANAN_PERMISSIONS, RolePermissionSeeder::UNDUHAN_PERMISSIONS),
+            $role->permissions->pluck('name')->all()
         );
+    }
+
+    public function test_sop_role_cannot_access_layanan_or_unduhan_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $role = Role::where('name', 'admin_ppid_sop')->first();
+
+        $this->assertFalse($role->hasPermissionTo('layanan.read'));
+        $this->assertFalse($role->hasPermissionTo('unduhan.read'));
+    }
+
+    public function test_layanan_role_cannot_access_sop_or_ppid_permissions(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        $role = Role::where('name', 'admin_layanan_publik')->first();
+
+        $this->assertFalse($role->hasPermissionTo('sop.read'));
+        $this->assertFalse($role->hasPermissionTo('ppid.read'));
     }
 
     public function test_admin_seeder_user_gets_super_admin_role(): void

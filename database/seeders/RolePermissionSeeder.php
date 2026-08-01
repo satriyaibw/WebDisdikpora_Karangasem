@@ -15,6 +15,7 @@ class RolePermissionSeeder extends Seeder
      * Fase 2: manajemen user/role/permission & audit log.
      * Fase 3: modul konten (berita, pengumuman, agenda, slider, galeri).
      * Fase 4: modul repositori dokumen PPID.
+     * Fase 5: katalog layanan publik, repositori SOP & pusat unduhan.
      */
     public const PERMISSIONS = [
         'panel.access',
@@ -67,6 +68,18 @@ class RolePermissionSeeder extends Seeder
         'ppid.create',
         'ppid.update',
         'ppid.delete',
+        'layanan.read',
+        'layanan.create',
+        'layanan.update',
+        'layanan.delete',
+        'sop.read',
+        'sop.create',
+        'sop.update',
+        'sop.delete',
+        'unduhan.read',
+        'unduhan.create',
+        'unduhan.update',
+        'unduhan.delete',
     ];
 
     /**
@@ -118,6 +131,36 @@ class RolePermissionSeeder extends Seeder
     ];
 
     /**
+     * Permission modul Katalog Layanan Publik (Fase 5) yang dimiliki Admin Layanan Publik.
+     */
+    public const LAYANAN_PERMISSIONS = [
+        'layanan.read',
+        'layanan.create',
+        'layanan.update',
+        'layanan.delete',
+    ];
+
+    /**
+     * Permission modul Repositori Dokumen SOP (Fase 5) yang dimiliki Admin PPID & SOP.
+     */
+    public const SOP_PERMISSIONS = [
+        'sop.read',
+        'sop.create',
+        'sop.update',
+        'sop.delete',
+    ];
+
+    /**
+     * Permission modul Pusat Unduhan Berkas (Fase 5) yang dimiliki Admin Layanan Publik.
+     */
+    public const UNDUHAN_PERMISSIONS = [
+        'unduhan.read',
+        'unduhan.create',
+        'unduhan.update',
+        'unduhan.delete',
+    ];
+
+    /**
      * Mapping label Bahasa Indonesia untuk setiap role.
      */
     public const ROLE_LABELS = [
@@ -139,8 +182,8 @@ class RolePermissionSeeder extends Seeder
         $roles = [
             'super_admin' => self::PERMISSIONS,
             'admin_redaksi_berita' => array_merge(['panel.access'], self::CONTENT_PERMISSIONS),
-            'admin_ppid_sop' => array_merge(['panel.access'], self::PPID_PERMISSIONS),
-            'admin_layanan_publik' => ['panel.access'],
+            'admin_ppid_sop' => array_merge(['panel.access'], self::PPID_PERMISSIONS, self::SOP_PERMISSIONS),
+            'admin_layanan_publik' => array_merge(['panel.access'], self::LAYANAN_PERMISSIONS, self::UNDUHAN_PERMISSIONS),
         ];
 
         foreach ($roles as $roleName => $permissions) {
