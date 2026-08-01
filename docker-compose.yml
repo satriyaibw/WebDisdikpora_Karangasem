@@ -14,7 +14,6 @@ services:
     working_dir: /var/www/html
     environment:
       - TZ=Asia/Makassar
-      - APP_ENV=${APP_ENV:-local}
     volumes:
       - ./:/var/www/html
     networks:
@@ -43,7 +42,6 @@ services:
     working_dir: /var/www/html
     environment:
       - TZ=Asia/Makassar
-      - APP_ENV=${APP_ENV:-local}
     volumes:
       - ./:/var/www/html
     networks:

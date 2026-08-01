@@ -11,9 +11,9 @@ use Spatie\Permission\PermissionRegistrar;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Daftar permission baseline Fase 2 dengan konvensi `{modul}.{aksi}`.
-     * Modul konten Fase 3+ (berita, ppid, layanan, dll) ditambahkan
-     * pada seeder di fase masing-masing.
+     * Daftar permission baseline dengan konvensi `{modul}.{aksi}`.
+     * Fase 2: manajemen user/role/permission & audit log.
+     * Fase 3: modul konten (berita, pengumuman, agenda, slider, galeri).
      */
     public const PERMISSIONS = [
         'panel.access',
@@ -30,6 +30,76 @@ class RolePermissionSeeder extends Seeder
         'permission.update',
         'permission.delete',
         'audit.read',
+        'kategori.read',
+        'kategori.create',
+        'kategori.update',
+        'kategori.delete',
+        'berita.read',
+        'berita.create',
+        'berita.update',
+        'berita.delete',
+        'pengumuman.read',
+        'pengumuman.create',
+        'pengumuman.update',
+        'pengumuman.delete',
+        'infografis.read',
+        'infografis.create',
+        'infografis.update',
+        'infografis.delete',
+        'agenda.read',
+        'agenda.create',
+        'agenda.update',
+        'agenda.delete',
+        'slider.read',
+        'slider.create',
+        'slider.update',
+        'slider.delete',
+        'galeri.read',
+        'galeri.create',
+        'galeri.update',
+        'galeri.delete',
+        'video.read',
+        'video.create',
+        'video.update',
+        'video.delete',
+    ];
+
+    /**
+     * Permission modul konten Fase 3 yang dimiliki Admin Redaksi / Berita.
+     */
+    public const CONTENT_PERMISSIONS = [
+        'kategori.read',
+        'kategori.create',
+        'kategori.update',
+        'kategori.delete',
+        'berita.read',
+        'berita.create',
+        'berita.update',
+        'berita.delete',
+        'pengumuman.read',
+        'pengumuman.create',
+        'pengumuman.update',
+        'pengumuman.delete',
+        'infografis.read',
+        'infografis.create',
+        'infografis.update',
+        'infografis.delete',
+        'agenda.read',
+        'agenda.create',
+        'agenda.update',
+        'agenda.delete',
+        'slider.read',
+        'slider.create',
+        'slider.update',
+        'slider.delete',
+        'galeri.read',
+        'galeri.create',
+        'galeri.update',
+        'galeri.delete',
+        'video.read',
+        'video.create',
+        'video.update',
+        'video.delete',
     ];
 
     /**
@@ -53,7 +123,7 @@ class RolePermissionSeeder extends Seeder
 
         $roles = [
             'super_admin' => self::PERMISSIONS,
-            'admin_redaksi_berita' => ['panel.access'],
+            'admin_redaksi_berita' => array_merge(['panel.access'], self::CONTENT_PERMISSIONS),
             'admin_ppid_sop' => ['panel.access'],
             'admin_layanan_publik' => ['panel.access'],
         ];
@@ -84,14 +154,15 @@ class RolePermissionSeeder extends Seeder
 
     /**
      * Pastikan user admin seeder memiliki peran Super Admin.
-     * Tidak menimpa peran lain yang di-assign manual lewat panel.
+     * Menggunakan assignRole (aditif) agar peran lain yang
+     * di-assign manual lewat panel tidak ikut terhapus.
      */
     private function assignSuperAdminToAdminUser(): void
     {
         $admin = User::where('email', 'admin@disdikpora.karangasemkab.go.id')->first();
 
         if ($admin !== null && ! $admin->hasRole('super_admin')) {
-            $admin->syncRoles(['super_admin']);
+            $admin->assignRole('super_admin');
         }
     }
 

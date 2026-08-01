@@ -63,11 +63,23 @@ class RolePermissionSeederTest extends TestCase
         );
     }
 
-    public function test_regular_admin_roles_only_get_panel_access(): void
+    public function test_redaksi_role_gets_panel_access_and_all_content_permissions(): void
     {
         $this->seed(RolePermissionSeeder::class);
 
-        foreach (['admin_redaksi_berita', 'admin_ppid_sop', 'admin_layanan_publik'] as $roleName) {
+        $role = Role::where('name', 'admin_redaksi_berita')->first();
+
+        $this->assertEqualsCanonicalizing(
+            array_merge(['panel.access'], RolePermissionSeeder::CONTENT_PERMISSIONS),
+            $role->permissions->pluck('name')->all()
+        );
+    }
+
+    public function test_ppid_and_layanan_roles_only_get_panel_access(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+
+        foreach (['admin_ppid_sop', 'admin_layanan_publik'] as $roleName) {
             $role = Role::where('name', $roleName)->first();
 
             $this->assertEqualsCanonicalizing(
@@ -86,5 +98,20 @@ class RolePermissionSeederTest extends TestCase
 
         $this->assertNotNull($admin);
         $this->assertTrue($admin->hasRole('super_admin'));
+    }
+
+    public function test_re_seeding_keeps_manually_assigned_roles_on_admin_user(): void
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@disdikpora.karangasemkab.go.id')->firstOrFail();
+        $admin->assignRole('admin_ppid_sop');
+
+        $this->seed(RolePermissionSeeder::class);
+
+        $admin->refresh();
+
+        $this->assertTrue($admin->hasRole('super_admin'));
+        $this->assertTrue($admin->hasRole('admin_ppid_sop'));
     }
 }
