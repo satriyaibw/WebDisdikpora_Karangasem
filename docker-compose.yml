@@ -1,0 +1,153 @@
+name: disdikpora-karangasem
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: disdikpora-karangasem/app
+    container_name: disdikpora-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      - TZ=Asia/Makassar
+      - APP_ENV=${APP_ENV:-local}
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - disdikpora
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: disdikpora-karangasem/app
+    container_name: disdikpora-queue-worker
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      - TZ=Asia/Makassar
+      - APP_ENV=${APP_ENV:-local}
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - disdikpora
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["sh", "-c", "php artisan queue:work redis --sleep=3 --tries=3 & php artisan schedule:work"]
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: disdikpora-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - TZ=Asia/Makassar
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx:/etc/nginx/conf.d:ro
+    networks:
+      - disdikpora
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: mysql:8.4
+    container_name: disdikpora-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      - TZ=Asia/Makassar
+      - MYSQL_DATABASE=${DB_DATABASE:-disdikpora}
+      - MYSQL_USER=${DB_USERNAME:-disdikpora}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-disdikpora}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - disdikpora
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: disdikpora-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-disdikpora}"]
+    environment:
+      - TZ=Asia/Makassar
+    volumes:
+      - redisdata:/data
+    networks:
+      - disdikpora
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:v1.30.6
+    container_name: disdikpora-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "127.0.0.1:8025:8025"
+    environment:
+      - TZ=Asia/Makassar
+    networks:
+      - disdikpora
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dbdata:
+    name: disdikpora-dbdata
+  redisdata:
+    name: disdikpora-redisdata
+
+networks:
+  disdikpora:
+    name: disdikpora-network
+    driver: bridge

@@ -1,0 +1,113 @@
+# Web Resmi Disdikpora Kabupaten Karangasem
+
+Website resmi **Dinas Pendidikan, Kepemudaan dan Olahraga Kabupaten Karangasem** — platform repositori informasi, katalog layanan publik, dokumen SOP, dan keterbukaan informasi publik (PPID) sesuai standar SPBE.
+
+## Tech Stack
+
+| Layer | Teknologi |
+| :--- | :--- |
+| Base Framework | PHP 8.3 + Laravel 11.x |
+| Admin Panel Engine | FilamentPHP v3 *(Fase 2)* |
+| Frontend | Blade + Livewire 3 + Tailwind CSS |
+| Database | MySQL 8.4 LTS |
+| Cache & Queue | Redis (dengan password) |
+| Environment | Docker & Docker Compose |
+
+## Prasyarat
+
+- Docker Engine + Docker Compose plugin
+- Sudo akses untuk menjalankan service Docker (pada sebagian mesin)
+
+## Setup Lokal (Zero-Configuration)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/satriyaibw/WebDisdikpora_Karangasem.git
+cd WebDisdikpora_Karangasem
+
+# 2. Copy environment file
+cp .env.example .env
+
+# 3. Jalankan seluruh container (App, Nginx, MySQL, Redis, Mailpit, Queue Worker)
+docker compose up -d --build
+
+# 4. Generate key aplikasi
+docker compose exec app php artisan key:generate
+
+# 5. Migrasi database + seeder awal
+docker compose exec app php artisan migrate --seed
+```
+
+Setelah selesai, akses:
+
+- **Website:** http://localhost
+- **Mailpit UI:** http://localhost:8025
+
+## Perintah Utama (dijalankan di dalam container)
+
+```bash
+# Melihat status service
+docker compose ps
+
+# Akses terminal PHP di dalam container
+docker compose exec app sh
+
+# Membersihkan cache server pasca update
+docker compose exec app php artisan optimize:clear
+docker compose exec app php artisan optimize
+
+# Audit keamanan dependency Composer
+docker compose exec app composer audit
+```
+
+## Struktur Direktori
+
+```
+├── app/                 # Logic aplikasi (Models, Controllers, Services)
+├── bootstrap/           # Bootstrap framework & cache
+├── config/              # Konfigurasi aplikasi
+├── database/            # Migration, seeder, factory
+├── docker/              # Konfigurasi container (nginx, php)
+├── public/              # Entry point publik (index.php, assets)
+├── resources/           # Blade views, assets, bahasa
+├── routes/              # Definisi route
+├── storage/             # Cache, log, upload lokal
+├── tests/               # Unit & feature tests
+├── vendor/              # Dependency Composer (tidak dikomit)
+├── Dockerfile           # Image PHP 8.3-fpm untuk service app
+└── docker-compose.yml   # Orkestrasi environment development
+```
+
+## Branching Strategy
+
+| Branch | Keterangan |
+| :--- | :--- |
+| `main` | Produksi — hanya terima merge dari `staging` setelah QA |
+| `staging` | Uji integrasi antar developer |
+| `feature/*` | Kerja harian, dibuat dari `staging` |
+
+Commit convention: `type: deskripsi singkat` (contoh: `feat: ...`, `fix: ...`, `docs: ...`).
+
+## User Awal (Seeder)
+
+- Email: `admin@disdikpora.karangasemkab.go.id`
+- Password: nilai `ADMIN_INITIAL_PASSWORD` pada `.env` (ubah sebelum deployment produksi)
+- Jika `ADMIN_INITIAL_PASSWORD` tidak diset, seeder membuat password acak dan mencetaknya ke output terminal saat user admin baru pertama kali dibuat.
+
+## Catatan Implementasi
+
+- Seluruh environment diset timezone **WITA** (`Asia/Makassar`).
+- Database tersimpan di volume Docker `dbdata` — tidak hilang saat container di-restart.
+- Versi Laravel mengikuti keputusan issue #1: **Laravel 11.x** (framework ini telah EOL; pastikan roadmap peningkatan versi keamanan direncanakan pada fase hardening).
+- Konfigurasi rahasia HANYA disimpan di `.env` lokal, tidak pernah dikomit.
+- Port `3306` (MySQL) dan `6379` (Redis) hanya dipublikasikan ke `127.0.0.1` (loopback) untuk keperluan tooling lokal.
+
+## Catatan Keamanan
+
+- **`composer.json` menonaktifkan blokir security advisory** (`policy.advisories.block: false`). Ini disengaja karena Laravel 11 sudah EOL dan memiliki CVE publik sehingga `composer install` akan gagal jika diaktifkan. **WAJIB dihapus** setelah upgrade ke Laravel 12.61.1+ sebelum go-live, dan pantau kerentanan secara rutin dengan `composer audit`.
+- MySQL 8.0 telah EOL sejak April 2026 — image telah di-pin ke `mysql:8.4` (LTS). Perhatikan versi image Docker lain yang di-pin agar selalu mendapat update keamanan.
+
+## Referensi
+
+- `MasterPlan.md` — Rencana Implementasi Global (roadmap 8 fase)
+- Issue & backlog — https://github.com/satriyaibw/WebDisdikpora_Karangasem/issues
