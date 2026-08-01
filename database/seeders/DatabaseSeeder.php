@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->seedAdminUser();
         $this->seedSettings();
         $this->call(RolePermissionSeeder::class);
+        $this->call(CategorySeeder::class);
     }
 
     private function seedAdminUser(): void
