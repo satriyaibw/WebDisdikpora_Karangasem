@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AuditLogResource\Pages;
 
 use App\Filament\Resources\AuditLogResource;
+use App\Models\AuditLog;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -34,7 +35,7 @@ class ViewAuditLog extends ViewRecord
                                 'delete' => 'danger',
                                 default => 'gray',
                             })
-                            ->formatStateUsing(fn (string $state): string => (new \App\Models\AuditLog(['action' => $state]))->action_label),
+                            ->formatStateUsing(fn (string $state): string => (new AuditLog(['action' => $state]))->action_label),
                         TextEntry::make('model_type')
                             ->label('Model')
                             ->formatStateUsing(fn (string $state): string => class_basename($state)),

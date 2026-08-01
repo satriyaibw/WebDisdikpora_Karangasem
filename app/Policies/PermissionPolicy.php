@@ -4,9 +4,9 @@ namespace App\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
-class RolePolicy
+class PermissionPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class RolePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('role.read');
+        return $user->can('permission.read');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Role $role): bool
+    public function view(User $user, Permission $permission): bool
     {
-        return $user->can('role.read');
+        return $user->can('permission.read');
     }
 
     /**
@@ -31,23 +31,23 @@ class RolePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('role.create');
+        return $user->can('permission.create');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Role $role): bool
+    public function update(User $user, Permission $permission): bool
     {
-        return $user->can('role.update');
+        return $user->can('permission.update');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Role $role): bool
+    public function delete(User $user, Permission $permission): bool
     {
-        return $user->can('role.delete');
+        return $user->can('permission.delete');
     }
 
     /**
@@ -55,13 +55,13 @@ class RolePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('role.delete');
+        return $user->can('permission.delete');
     }
 
     /**
-     * Peran tidak memakai soft delete, sehingga aksi berikut tidak tersedia.
+     * Permission tidak memakai soft delete, sehingga aksi berikut tidak tersedia.
      */
-    public function forceDelete(User $user, Role $role): bool
+    public function forceDelete(User $user, Permission $permission): bool
     {
         return false;
     }
@@ -71,7 +71,7 @@ class RolePolicy
         return false;
     }
 
-    public function restore(User $user, Role $role): bool
+    public function restore(User $user, Permission $permission): bool
     {
         return false;
     }
@@ -81,7 +81,7 @@ class RolePolicy
         return false;
     }
 
-    public function replicate(User $user, Role $role): bool
+    public function replicate(User $user, Permission $permission): bool
     {
         return false;
     }

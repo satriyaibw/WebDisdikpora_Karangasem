@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\AuditLog;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -25,11 +26,21 @@ class AuditObserver
     ];
 
     /**
+     * Atribut yang tidak relevan untuk audit (berubah otomatis oleh sistem).
+     */
+    protected const IGNORABLE_ATTRIBUTES = [
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
      * Aksi Create.
      */
     public function created(Model $model): void
     {
-        $this->record($model, 'create', null, $model->getAttributes());
+        $attributes = Arr::except($model->getAttributes(), static::IGNORABLE_ATTRIBUTES);
+
+        $this->record($model, 'create', null, $attributes);
     }
 
     /**
@@ -37,14 +48,16 @@ class AuditObserver
      */
     public function updated(Model $model): void
     {
-        if (empty($model->getChanges())) {
+        $changes = array_diff_key($model->getChanges(), array_flip(static::IGNORABLE_ATTRIBUTES));
+
+        if (empty($changes)) {
             return;
         }
 
         $oldValues = [];
         $newValues = [];
 
-        foreach (array_keys($model->getChanges()) as $attribute) {
+        foreach (array_keys($changes) as $attribute) {
             $oldValues[$attribute] = $model->getOriginal($attribute);
             $newValues[$attribute] = $model->getAttribute($attribute);
         }

@@ -66,16 +66,11 @@ class User extends Authenticatable implements FilamentUser
     /**
      * Tentukan apakah user diizinkan mengakses panel admin.
      *
-     * Hanya user aktif yang memiliki peran (role) sah
-     * atau permission `panel.access` yang dapat masuk.
+     * Hanya user aktif yang memiliki permission `panel.access`
+     * (diberikan ke seluruh peran admin oleh RolePermissionSeeder).
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_active && $this->hasAnyRole([
-            config('filament-shield.super_admin.name'),
-            'admin_redaksi_berita',
-            'admin_ppid_sop',
-            'admin_layanan_publik',
-        ]);
+        return $this->is_active && $this->can('panel.access');
     }
 }

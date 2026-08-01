@@ -64,6 +64,27 @@ class PanelAccessTest extends TestCase
             ->assertOk();
     }
 
+    public function test_super_admin_can_view_audit_log_detail_page(): void
+    {
+        $log = AuditLog::factory()->create();
+
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin)
+            ->get(AuditLogResource::getUrl('view', ['record' => $log]))
+            ->assertOk();
+    }
+
+    public function test_non_super_admin_cannot_view_audit_log_detail_page(): void
+    {
+        $log = AuditLog::factory()->create();
+
+        $redaksi = User::factory()->create();
+        $redaksi->assignRole('admin_redaksi_berita');
+        $this->actingAs($redaksi)
+            ->get(AuditLogResource::getUrl('view', ['record' => $log]))
+            ->assertForbidden();
+    }
+
     public function test_non_super_admin_cannot_view_audit_log_page(): void
     {
         AuditLog::factory()->create();

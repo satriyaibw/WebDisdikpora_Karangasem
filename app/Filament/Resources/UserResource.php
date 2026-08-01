@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserResource extends Resource
 {
@@ -47,7 +48,19 @@ class UserResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->can('user.delete') ?? false;
+        if (! auth()->user()?->can('user.delete')) {
+            return false;
+        }
+
+        if (! $record instanceof User) {
+            return false;
+        }
+
+        if (static::isProtectedAccount($record)) {
+            return false;
+        }
+
+        return true;
     }
 
     public static function canDeleteAny(): bool
@@ -82,7 +95,8 @@ class UserResource extends Resource
                         Forms\Components\Toggle::make('is_active')
                             ->label('Akun Aktif')
                             ->helperText('Nonaktifkan untuk mencabut akses pengguna ke panel admin.')
-                            ->default(true),
+                            ->default(true)
+                            ->disabled(fn (?User $record): bool => static::isProtectedAccount($record)),
                     ])
                     ->columns(2),
                 Forms\Components\Section::make('Hak Akses')
@@ -91,10 +105,11 @@ class UserResource extends Resource
                         Forms\Components\Select::make('roles')
                             ->label('Peran (Role)')
                             ->relationship('roles', 'name')
-                            ->options(fn (): array => self::roleOptions())
+                            ->getOptionLabelFromRecordUsing(fn (Role $record): string => $record->label)
                             ->multiple()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false),
                     ]),
             ]);
     }
@@ -115,7 +130,6 @@ class UserResource extends Resource
                     ->label('Peran')
                     ->badge()
                     ->color('primary')
-                    ->formatStateUsing(fn ($state) => $state)
                     ->separator(','),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Status')
@@ -139,7 +153,14 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function (Collection $records): void {
+                            $records
+                                ->filter(fn (User $record): bool => static::canDelete($record))
+                                ->each->delete();
+
+                            $this->success();
+                        }),
                 ]),
             ]);
     }
@@ -154,8 +175,8 @@ class UserResource extends Resource
     }
 
     /**
-     * Opsi daftar peran: value = nama role (machine-readable),
-     * label = nama tampilan Bahasa Indonesia.
+     * Opsi filter peran: value = nama role (machine-readable, cocok
+     * dengan SelectFilter relationship), label = nama tampilan Indonesia.
      */
     protected static function roleOptions(): array
     {
@@ -167,11 +188,52 @@ class UserResource extends Resource
     }
 
     /**
-     * Hindari menampilkan akun super admin pada daftar yang dapat
-     * dihapus/dinonaktifkan oleh pengelola (proteksi keselamatan sistem).
+     * Akun yang tidak boleh dinonaktifkan:
+     * - akun yang sedang login (mencegah kunci sendiri),
+     * - super admin aktif terakhir (mencegah sistem tanpa super admin).
+     */
+    public static function isProtectedAccount(?User $record): bool
+    {
+        if ($record === null) {
+            return false;
+        }
+
+        if ($record->is(auth()->user())) {
+            return true;
+        }
+
+        if (! $record->is_active) {
+            return false;
+        }
+
+        if (! $record->hasRole(config('filament-shield.super_admin.name'))) {
+            return false;
+        }
+
+        $activeSuperAdmins = User::query()
+            ->where('is_active', true)
+            ->whereHas('roles', fn (Builder $query) => $query
+                ->where('name', config('filament-shield.super_admin.name')))
+            ->count();
+
+        return $activeSuperAdmins <= 1;
+    }
+
+    /**
+     * Batasi data yang dapat dikelola:
+     * - Non-super-admin tidak boleh melihat/mengelola akun super admin.
      */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery();
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if (! $user?->hasRole(config('filament-shield.super_admin.name'))) {
+            $query->whereDoesntHave('roles', fn (Builder $query) => $query
+                ->where('name', config('filament-shield.super_admin.name')));
+        }
+
+        return $query;
     }
 }
