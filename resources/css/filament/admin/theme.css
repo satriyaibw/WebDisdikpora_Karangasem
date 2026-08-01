@@ -1,0 +1,34 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@config 'tailwind.config.js';
+
+/* =====================================================
+   Identitas Disdikpora Karangasem
+   Warna primer: merah (Karangasem) & aksen emas
+   ===================================================== */
+.fi-theme\:admin {
+    --primary-50: #fdf2f3;
+    --primary-100: #fbe3e5;
+    --primary-200: #f6c7cb;
+    --primary-300: #ee9da4;
+    --primary-400: #e36571;
+    --primary-500: #d43c4c;
+    --primary-600: #c41e2a;
+    --primary-700: #a31824;
+    --primary-800: #861722;
+    --primary-900: #711922;
+    --primary-950: #3e090f;
+}
+
+/* Aksen emas pada brand logo & judul sidebar */
+.fi-theme\:admin .fi-sidebar-header .fi-logo {
+    color: #d4a017;
+}
+
+.fi-theme\:admin .fi-sidebar-header h2 {
+    color: #c41e2a;
+}
+
+/* Logo transparan otomatis mendukung light & dark mode.
+   Bila diperlukan varian khusus dark mode, tambahkan:
+   .dark.fi-theme\:admin .fi-sidebar-header .fi-logo img { content: url('/images/disdikpora-logo-dark.svg'); } */
