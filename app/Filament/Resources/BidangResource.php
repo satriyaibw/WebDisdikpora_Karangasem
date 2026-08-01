@@ -75,6 +75,7 @@ class BidangResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
+                            ->alphaDash()
                             ->helperText('Otomatis diisi dari nama.'),
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')

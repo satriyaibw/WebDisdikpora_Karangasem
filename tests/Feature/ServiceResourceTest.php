@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\ServiceResource;
 use App\Filament\Resources\ServiceResource\Pages\CreateService;
 use App\Filament\Resources\ServiceResource\Pages\EditService;
+use App\Filament\Resources\ServiceResource\Pages\ListServices;
 use App\Models\Bidang;
 use App\Models\Service;
 use App\Models\User;
@@ -253,6 +254,66 @@ class ServiceResourceTest extends TestCase
         $this->assertTrue(ServiceResource::canViewAny());
         $this->assertTrue(ServiceResource::canCreate());
         $this->assertTrue(ServiceResource::canEdit(Service::first()));
+    }
+
+    public function test_removing_template_on_update_clears_file_size_and_deletes_old_pdf(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $path = 'lampiran/layanan/akan-dihapus.pdf';
+        Storage::disk('public')->put($path, '%PDF-1.4 (lama)');
+
+        $service = Service::create([
+            'name' => 'Hapus Template',
+            'slug' => 'hapus-template',
+            'form_template' => $path,
+            'file_size' => Storage::disk('public')->size($path),
+            'status' => Service::STATUS_DRAFT,
+        ]);
+
+        Livewire::test(EditService::class, ['record' => $service->getRouteKey()])
+            ->fillForm([
+                'name' => 'Hapus Template',
+                'slug' => 'hapus-template',
+                'status' => Service::STATUS_DRAFT,
+                'form_template' => null,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $service->refresh();
+
+        $this->assertNull($service->form_template);
+        $this->assertNull($service->file_size, 'file_size harus kosong saat template dihapus.');
+        $this->assertFalse(Storage::disk('public')->exists($path), 'Berkas lama harus terhapus saat template dihapus.');
+    }
+
+    public function test_download_action_follows_template_availability(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $path = 'lampiran/layanan/tersedia.pdf';
+        Storage::disk('public')->put($path, '%PDF-1.4');
+
+        $withTemplate = Service::create([
+            'name' => 'Dengan Template',
+            'slug' => 'dengan-template',
+            'form_template' => $path,
+            'file_size' => Storage::disk('public')->size($path),
+            'status' => Service::STATUS_DRAFT,
+        ]);
+
+        $withoutTemplate = Service::create([
+            'name' => 'Tanpa Template',
+            'slug' => 'tanpa-template',
+            'status' => Service::STATUS_DRAFT,
+        ]);
+
+        Livewire::test(ListServices::class)
+            ->assertTableActionEnabled('download', $withTemplate)
+            ->assertTableActionDisabled('download', $withoutTemplate);
     }
 
     public function test_user_without_layanan_permission_cannot_access_resource(): void

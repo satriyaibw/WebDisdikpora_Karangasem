@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\PpidCategory;
 use App\Models\PpidDocument;
+use Database\Seeders\Traits\SeedsDummyPdfs;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Fase 4: Seed data awal repositori dokumen PPID.
@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class PpidSeeder extends Seeder
 {
+    use SeedsDummyPdfs;
+
     /**
      * Kategori KIP sesuai MasterPlan 4.1.
      */
@@ -127,21 +129,5 @@ class PpidSeeder extends Seeder
                 ]
             );
         }
-    }
-
-    /**
-     * Pastikan file PDF dummy tersedia di disk `public` dan kembalikan ukurannya.
-     */
-    private function ensureDummyPdf(string $path): int
-    {
-        $disk = Storage::disk('public');
-
-        if (! $disk->exists($path)) {
-            $content = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\nxref\n0 4\ntrailer\n<< /Size 4 /Root 1 0 R >>\n%%EOF\n";
-
-            $disk->put($path, $content);
-        }
-
-        return $disk->size($path) ?? 0;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\HasPdfUploads;
 use App\Filament\Resources\ServiceResource\Pages;
 use App\Models\Service;
 use App\Rules\ValidPdfFile;
@@ -16,6 +17,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ServiceResource extends Resource
 {
+    use HasPdfUploads;
+
     protected static ?string $model = Service::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
@@ -77,6 +80,7 @@ class ServiceResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
+                            ->alphaDash()
                             ->helperText('Otomatis diisi dari nama.'),
                         Forms\Components\Select::make('bidang_id')
                             ->label('Bidang/Sub-Bagian')
@@ -143,9 +147,7 @@ class ServiceResource extends Resource
                             ])
                             ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => static::safeStoredFileName($file->getClientOriginalName()))
                             ->afterStateUpdated(function (Forms\Set $set, TemporaryUploadedFile|string|null $state): void {
-                                if ($state instanceof TemporaryUploadedFile) {
-                                    $set('file_size', $state->getSize());
-                                }
+                                $set('file_size', $state instanceof TemporaryUploadedFile ? $state->getSize() : null);
                             })
                             ->helperText('Opsional — hanya berkas PDF asli (dicek magic bytes), maksimal 10 MB.'),
                         Forms\Components\TextInput::make('file_size')
@@ -190,9 +192,15 @@ class ServiceResource extends Resource
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('form_template')
                     ->label('Formulir')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('info')
-                    ->tooltip('Template formulir PDF tersedia'),
+                    ->boolean()
+                    ->true('heroicon-o-document-arrow-down', 'info')
+                    ->false('heroicon-o-x-circle', 'gray')
+                    ->tooltip(fn (Service $record): string => filled($record->form_template) ? 'Template formulir PDF tersedia' : 'Tanpa template formulir'),
+                Tables\Columns\TextColumn::make('file_size')
+                    ->label('Ukuran')
+                    ->formatStateUsing(fn (?int $state): string => Service::formatFileSize($state))
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -226,6 +234,7 @@ class ServiceResource extends Resource
                     ->url(fn (Service $record): ?string => filled($record->form_template) && Storage::disk('public')->exists($record->form_template)
                         ? Storage::disk('public')->url($record->form_template)
                         : null)
+                    ->disabled(fn (Service $record): bool => blank($record->form_template) || ! Storage::disk('public')->exists($record->form_template))
                     ->openUrlInNewTab()
                     ->tooltip('Unduh template formulir PDF dari disk'),
                 Tables\Actions\EditAction::make(),
@@ -246,36 +255,5 @@ class ServiceResource extends Resource
             'create' => Pages\CreateService::route('/create'),
             'edit' => Pages\EditService::route('/{record}/edit'),
         ];
-    }
-
-    /**
-     * Ukuran berkas (byte) dari path di disk `public`, atau null bila tidak terbaca.
-     */
-    public static function resolveStoredFileSize(string $path): ?int
-    {
-        try {
-            $size = Storage::disk('public')->size($path);
-        } catch (\Throwable) {
-            return null;
-        }
-
-        return $size === false ? null : $size;
-    }
-
-    /**
-     * Nama file aman untuk dokumen PDF.
-     *
-     * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
-     * berbahaya) lalu diberi suffix acak agar unik di disk. Ekstensi
-     * SELALU dipaksa `.pdf` — ekstensi dari client tidak dipercaya agar
-     * file polyglot ber-ekstensi berbahaya (mis. `.php`) tidak dapat
-     * dieksekusi web server.
-     */
-    public static function safeStoredFileName(string $originalName): string
-    {
-        $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-        $safeName = $safeName !== '' ? $safeName : 'dokumen';
-
-        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.pdf';
     }
 }

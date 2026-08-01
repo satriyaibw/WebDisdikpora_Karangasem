@@ -10,17 +10,14 @@ class CreateDownloadFile extends CreateRecord
     protected static string $resource = DownloadFileResource::class;
 
     /**
-     * Isi `file_size` otomatis dari berkas yang sudah tersimpan di disk.
+     * Isi `file_size` otomatis dari berkas yang sudah tersimpan di disk,
+     * atau null bila tidak ada berkas (mencegah nilai basi tersimpan).
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (! empty($data['file_path'])) {
-            $size = DownloadFileResource::resolveStoredFileSize($data['file_path']);
-
-            if ($size !== null) {
-                $data['file_size'] = $size;
-            }
-        }
+        $data['file_size'] = filled($data['file_path'])
+            ? DownloadFileResource::resolveStoredFileSize($data['file_path'])
+            : null;
 
         return $data;
     }

@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Resources\DownloadFileResource;
 use App\Filament\Resources\DownloadFileResource\Pages\CreateDownloadFile;
 use App\Filament\Resources\DownloadFileResource\Pages\EditDownloadFile;
+use App\Filament\Resources\DownloadFileResource\Pages\ListDownloadFiles;
 use App\Models\DownloadFile;
 use App\Models\User;
+use Database\Seeders\DownloadFileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -33,6 +35,7 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => 'Formulir Uji Unduhan',
+                'slug' => 'formulir-uji-unduhan',
                 'description' => 'Formulir untuk pengujian.',
                 'type' => DownloadFile::TYPE_FORMULIR,
                 'status' => DownloadFile::STATUS_PUBLISHED,
@@ -132,6 +135,7 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => 'Berkas Status',
+                'slug' => 'berkas-status',
                 'type' => DownloadFile::TYPE_FORMULIR,
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('status.pdf', "%PDF-1.4\n%%EOF"),
@@ -159,6 +163,7 @@ class DownloadFileResourceTest extends TestCase
 
         $file = DownloadFile::create([
             'title' => 'Ganti Berkas Unduhan',
+            'slug' => 'ganti-berkas-unduhan',
             'type' => DownloadFile::TYPE_FORMULIR,
             'file_path' => $oldPath,
             'file_size' => Storage::disk('public')->size($oldPath),
@@ -184,6 +189,7 @@ class DownloadFileResourceTest extends TestCase
 
         $file = DownloadFile::create([
             'title' => 'Hapus Berkas Unduhan',
+            'slug' => 'hapus-berkas-unduhan',
             'type' => DownloadFile::TYPE_JUKNIS,
             'file_path' => $path,
             'file_size' => Storage::disk('public')->size($path),
@@ -204,6 +210,89 @@ class DownloadFileResourceTest extends TestCase
         $this->assertTrue(DownloadFileResource::canViewAny());
         $this->assertTrue(DownloadFileResource::canCreate());
         $this->assertTrue(DownloadFileResource::canEdit(DownloadFile::first()));
+    }
+
+    public function test_download_file_slug_is_required_and_unique(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $existing = DownloadFile::firstOrFail();
+
+        Livewire::test(CreateDownloadFile::class)
+            ->fillForm([
+                'title' => 'Berkas Tanpa Slug',
+                'slug' => '',
+                'type' => DownloadFile::TYPE_FORMULIR,
+                'status' => DownloadFile::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-kosong.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'required']);
+
+        Livewire::test(CreateDownloadFile::class)
+            ->fillForm([
+                'title' => 'Berkas Slug Duplikat',
+                'slug' => $existing->slug,
+                'type' => DownloadFile::TYPE_FORMULIR,
+                'status' => DownloadFile::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-duplikat.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'unique']);
+    }
+
+    public function test_download_file_slug_must_be_alpha_dash(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateDownloadFile::class)
+            ->fillForm([
+                'title' => 'Berkas Slug Salah Format',
+                'slug' => 'Berkas Slug Salah / X',
+                'type' => DownloadFile::TYPE_FORMULIR,
+                'status' => DownloadFile::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-salah.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'alpha_dash']);
+    }
+
+    public function test_download_action_is_disabled_when_file_is_missing(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $file = DownloadFile::create([
+            'title' => 'Berkas Tanpa PDF',
+            'slug' => 'berkas-tanpa-pdf',
+            'type' => DownloadFile::TYPE_FORMULIR,
+            'status' => DownloadFile::STATUS_DRAFT,
+            'file_path' => 'lampiran/unduhan/hilang.pdf',
+        ]);
+
+        Livewire::test(ListDownloadFiles::class)
+            ->assertTableActionDisabled('download', $file);
+    }
+
+    public function test_download_file_seeder_does_not_duplicate_when_title_is_renamed(): void
+    {
+        $this->seed(DownloadFileSeeder::class);
+
+        $file = DownloadFile::where('slug', 'formulir-pendaftaran-peserta-didik-baru')->firstOrFail();
+        $oldPath = $file->file_path;
+
+        $file->update(['title' => 'Formulir PPDB Terbaru']);
+
+        $this->seed(DownloadFileSeeder::class);
+
+        $this->assertSame(1, DownloadFile::where('slug', 'formulir-pendaftaran-peserta-didik-baru')->count());
+        $file->refresh();
+
+        $this->assertSame('Formulir Pendaftaran Peserta Didik Baru', $file->title);
+        $this->assertSame($oldPath, $file->file_path);
+        $this->assertTrue(Storage::disk('public')->exists($oldPath), 'Berkas seeder harus dipakai ulang, bukan dibuat duplikat.');
     }
 
     public function test_user_without_unduhan_permission_cannot_access_resource(): void

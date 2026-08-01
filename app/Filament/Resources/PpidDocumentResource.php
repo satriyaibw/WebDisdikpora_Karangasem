@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\HasPdfUploads;
 use App\Filament\Resources\PpidDocumentResource\Pages;
 use App\Models\PpidDocument;
 use App\Rules\ValidPdfFile;
@@ -11,11 +12,12 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PpidDocumentResource extends Resource
 {
+    use HasPdfUploads;
+
     protected static ?string $model = PpidDocument::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -103,9 +105,7 @@ class PpidDocumentResource extends Resource
                             ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => static::safeStoredFileName($file->getClientOriginalName()))
                             ->required()
                             ->afterStateUpdated(function (Forms\Set $set, TemporaryUploadedFile|string|null $state): void {
-                                if ($state instanceof TemporaryUploadedFile) {
-                                    $set('file_size', $state->getSize());
-                                }
+                                $set('file_size', $state instanceof TemporaryUploadedFile ? $state->getSize() : null);
                             })
                             ->helperText('Hanya berkas PDF asli (dicek magic bytes), maksimal 10 MB.'),
                         Forms\Components\TextInput::make('file_size')
@@ -221,37 +221,6 @@ class PpidDocumentResource extends Resource
             'create' => Pages\CreatePpidDocument::route('/create'),
             'edit' => Pages\EditPpidDocument::route('/{record}/edit'),
         ];
-    }
-
-    /**
-     * Ukuran berkas (byte) dari path di disk `public`, atau null bila tidak terbaca.
-     */
-    public static function resolveStoredFileSize(string $path): ?int
-    {
-        try {
-            $size = Storage::disk('public')->size($path);
-        } catch (\Throwable) {
-            return null;
-        }
-
-        return $size === false ? null : $size;
-    }
-
-    /**
-     * Nama file aman untuk dokumen PDF.
-     *
-     * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
-     * berbahaya) lalu diberi suffix acak agar unik di disk. Ekstensi
-     * SELALU dipaksa `.pdf` — ekstensi dari client tidak dipercaya agar
-     * file polyglot ber-ekstensi berbahaya (mis. `.php`) tidak dapat
-     * dieksekusi web server.
-     */
-    public static function safeStoredFileName(string $originalName): string
-    {
-        $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-        $safeName = $safeName !== '' ? $safeName : 'dokumen';
-
-        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.pdf';
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\Auditable;
 use App\Models\Traits\DeletesOrphanedFiles;
+use App\Models\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DownloadFile extends Model
 {
-    use Auditable, DeletesOrphanedFiles, HasFactory;
+    use Auditable, DeletesOrphanedFiles, FormatsFileSize, HasFactory;
 
     /**
      * Kolom penyimpan file PDF di disk `public`.
@@ -43,6 +44,7 @@ class DownloadFile extends Model
      */
     protected $fillable = [
         'title',
+        'slug',
         'description',
         'type',
         'file_path',
@@ -88,24 +90,5 @@ class DownloadFile extends Model
             self::STATUS_PUBLISHED => 'Terbit',
             self::STATUS_ARCHIVED => 'Arsip',
         ];
-    }
-
-    /**
-     * Format ukuran berkas (byte) menjadi bacaan manusiawi.
-     */
-    public static function formatFileSize(?int $bytes): string
-    {
-        if ($bytes === null || $bytes < 0) {
-            return '-';
-        }
-
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
-        $power = $bytes > 0 ? (int) floor(log($bytes, 1024)) : 0;
-        $power = min($power, count($units) - 1);
-
-        $value = $bytes / (1024 ** $power);
-
-        return number_format($value, $power > 0 ? 1 : 0).' '.$units[$power];
     }
 }

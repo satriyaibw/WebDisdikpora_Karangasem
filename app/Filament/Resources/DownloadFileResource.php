@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\HasPdfUploads;
 use App\Filament\Resources\DownloadFileResource\Pages;
 use App\Models\DownloadFile;
 use App\Rules\ValidPdfFile;
@@ -16,6 +17,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class DownloadFileResource extends Resource
 {
+    use HasPdfUploads;
+
     protected static ?string $model = DownloadFile::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
@@ -69,7 +72,16 @@ class DownloadFileResource extends Resource
                         Forms\Components\TextInput::make('title')
                             ->label('Nama Berkas')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn (Forms\Components\TextInput $component, Forms\Set $set, ?string $state) => $set('slug', Str::slug((string) $state))),
+                        Forms\Components\TextInput::make('slug')
+                            ->label('Slug')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->alphaDash()
+                            ->helperText('Otomatis diisi dari nama berkas.'),
                         Forms\Components\Select::make('type')
                             ->label('Jenis Berkas')
                             ->options(DownloadFile::typeOptions())
@@ -99,9 +111,7 @@ class DownloadFileResource extends Resource
                             ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => static::safeStoredFileName($file->getClientOriginalName()))
                             ->required()
                             ->afterStateUpdated(function (Forms\Set $set, TemporaryUploadedFile|string|null $state): void {
-                                if ($state instanceof TemporaryUploadedFile) {
-                                    $set('file_size', $state->getSize());
-                                }
+                                $set('file_size', $state instanceof TemporaryUploadedFile ? $state->getSize() : null);
                             })
                             ->helperText('Hanya berkas PDF asli (dicek magic bytes), maksimal 10 MB.'),
                         Forms\Components\TextInput::make('file_size')
@@ -129,6 +139,10 @@ class DownloadFileResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->limit(50),
+                Tables\Columns\TextColumn::make('slug')
+                    ->label('Slug')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('type')
                     ->label('Jenis Berkas')
                     ->badge()
@@ -145,9 +159,10 @@ class DownloadFileResource extends Resource
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('file_path')
                     ->label('Berkas')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('info')
-                    ->tooltip('PDF tersimpan di disk'),
+                    ->boolean()
+                    ->true('heroicon-o-document-arrow-down', 'info')
+                    ->false('heroicon-o-x-circle', 'gray')
+                    ->tooltip(fn (DownloadFile $record): string => filled($record->file_path) ? 'PDF tersimpan di disk' : 'Belum ada berkas'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -176,9 +191,10 @@ class DownloadFileResource extends Resource
                 Tables\Actions\Action::make('download')
                     ->label('Unduh PDF')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (DownloadFile $record): ?string => Storage::disk('public')->exists($record->file_path)
+                    ->url(fn (DownloadFile $record): ?string => filled($record->file_path) && Storage::disk('public')->exists($record->file_path)
                         ? Storage::disk('public')->url($record->file_path)
                         : null)
+                    ->disabled(fn (DownloadFile $record): bool => blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path))
                     ->openUrlInNewTab()
                     ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
@@ -199,36 +215,5 @@ class DownloadFileResource extends Resource
             'create' => Pages\CreateDownloadFile::route('/create'),
             'edit' => Pages\EditDownloadFile::route('/{record}/edit'),
         ];
-    }
-
-    /**
-     * Ukuran berkas (byte) dari path di disk `public`, atau null bila tidak terbaca.
-     */
-    public static function resolveStoredFileSize(string $path): ?int
-    {
-        try {
-            $size = Storage::disk('public')->size($path);
-        } catch (\Throwable) {
-            return null;
-        }
-
-        return $size === false ? null : $size;
-    }
-
-    /**
-     * Nama file aman untuk dokumen PDF.
-     *
-     * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
-     * berbahaya) lalu diberi suffix acak agar unik di disk. Ekstensi
-     * SELALU dipaksa `.pdf` — ekstensi dari client tidak dipercaya agar
-     * file polyglot ber-ekstensi berbahaya (mis. `.php`) tidak dapat
-     * dieksekusi web server.
-     */
-    public static function safeStoredFileName(string $originalName): string
-    {
-        $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-        $safeName = $safeName !== '' ? $safeName : 'dokumen';
-
-        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.pdf';
     }
 }

@@ -51,7 +51,7 @@ class BidangSeeder extends Seeder
     public function run(): void
     {
         foreach (self::BIDANGS as $bidang) {
-            Bidang::firstOrCreate(
+            Bidang::updateOrCreate(
                 ['slug' => $bidang['slug']],
                 $bidang
             );

@@ -9,6 +9,7 @@ use App\Filament\Resources\SopDocumentResource\Pages\ListSopDocuments;
 use App\Models\Bidang;
 use App\Models\SopDocument;
 use App\Models\User;
+use Database\Seeders\SopSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -37,6 +38,7 @@ class SopDocumentResourceTest extends TestCase
         Livewire::test(CreateSopDocument::class)
             ->fillForm([
                 'title' => 'SOP Uji Coba',
+                'slug' => 'sop-uji-coba',
                 'sop_number' => '800/010/SOP/2025',
                 'issuance_date' => '2025-05-01',
                 'bidang_id' => $bidang->id,
@@ -152,6 +154,7 @@ class SopDocumentResourceTest extends TestCase
         Livewire::test(CreateSopDocument::class)
             ->fillForm([
                 'title' => 'SOP Status',
+                'slug' => 'sop-status',
                 'status' => SopDocument::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('status.pdf', "%PDF-1.4\n%%EOF"),
             ])
@@ -193,6 +196,85 @@ class SopDocumentResourceTest extends TestCase
         $this->assertTrue(SopDocumentResource::canViewAny());
         $this->assertTrue(SopDocumentResource::canCreate());
         $this->assertTrue(SopDocumentResource::canEdit(SopDocument::first()));
+    }
+
+    public function test_sop_slug_is_required_and_unique(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $existing = SopDocument::firstOrFail();
+
+        Livewire::test(CreateSopDocument::class)
+            ->fillForm([
+                'title' => 'SOP Tanpa Slug',
+                'slug' => '',
+                'status' => SopDocument::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-kosong.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'required']);
+
+        Livewire::test(CreateSopDocument::class)
+            ->fillForm([
+                'title' => 'SOP Slug Duplikat',
+                'slug' => $existing->slug,
+                'status' => SopDocument::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-duplikat.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'unique']);
+    }
+
+    public function test_sop_slug_must_be_alpha_dash(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateSopDocument::class)
+            ->fillForm([
+                'title' => 'SOP Slug Salah Format',
+                'slug' => 'SOP Slug Salah / X',
+                'status' => SopDocument::STATUS_DRAFT,
+                'file_path' => UploadedFile::fake()->createWithContent('slug-salah.pdf', "%PDF-1.4\n%%EOF"),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'alpha_dash']);
+    }
+
+    public function test_download_action_is_disabled_when_file_is_missing(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $sop = SopDocument::create([
+            'title' => 'SOP Tanpa Berkas',
+            'slug' => 'sop-tanpa-berkas',
+            'status' => SopDocument::STATUS_DRAFT,
+            'file_path' => 'lampiran/sop/hilang.pdf',
+        ]);
+
+        Livewire::test(ListSopDocuments::class)
+            ->assertTableActionDisabled('download', $sop);
+    }
+
+    public function test_sop_seeder_does_not_duplicate_when_title_is_renamed(): void
+    {
+        $this->seed(SopSeeder::class);
+
+        $sop = SopDocument::where('slug', 'sop-legalisir-ijazah')->firstOrFail();
+        $oldPath = $sop->file_path;
+
+        $sop->update(['title' => 'SOP Baru Legalisir Ijazah']);
+
+        $this->seed(SopSeeder::class);
+
+        $this->assertSame(1, SopDocument::where('slug', 'sop-legalisir-ijazah')->count());
+        $sop->refresh();
+
+        $this->assertSame('SOP Pelayanan Legalisir Ijazah', $sop->title);
+        $this->assertSame($oldPath, $sop->file_path);
+        $this->assertTrue(Storage::disk('public')->exists($oldPath), 'Berkas seeder harus dipakai ulang, bukan dibuat duplikat.');
     }
 
     public function test_user_without_sop_permission_cannot_access_resource(): void
