@@ -69,6 +69,7 @@ class InfographicResource extends Resource
                             ->disk('public')
                             ->directory('images/infografis')
                             ->imageEditor()
+                            ->maxSize(20480)
                             ->saveUploadedFileUsing(fn (Forms\Components\FileUpload $component, TemporaryUploadedFile $file): string => ImageOptimizer::convertToWebp($file, 'infografis'))
                             ->required()
                             ->helperText('Otomatis dikompresi dan dikonversi ke format WebP.'),
@@ -79,6 +80,7 @@ class InfographicResource extends Resource
                         Forms\Components\TextInput::make('link')
                             ->label('Tautan Tujuan (Opsional)')
                             ->url()
+                            ->rules(['regex:/^https?:\/\//i'])
                             ->maxLength(500)
                             ->helperText('Saat infografis diklik, pengguna diarahkan ke tautan ini.'),
                         Forms\Components\Toggle::make('is_active')

@@ -66,6 +66,39 @@ class ValidYouTubeUrlTest extends TestCase
     }
 
     #[Test]
+    public function it_accepts_youtube_nocookie_urls(): void
+    {
+        $urls = [
+            'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+            'https://youtube-nocookie.com/watch?v=dQw4w9WgXcQ',
+        ];
+
+        foreach ($urls as $url) {
+            $this->assertTrue(
+                Validator::make(['url' => $url], ['url' => [new ValidYouTubeUrl]])->passes(),
+                "Harus valid: {$url}"
+            );
+        }
+    }
+
+    #[Test]
+    public function it_rejects_video_ids_with_invalid_length(): void
+    {
+        $urls = [
+            'https://www.youtube.com/watch?v=abc',
+            'https://youtu.be/123',
+            'https://www.youtube.com/watch?v='.str_repeat('a', 20),
+        ];
+
+        foreach ($urls as $url) {
+            $this->assertFalse(
+                Validator::make(['url' => $url], ['url' => [new ValidYouTubeUrl]])->passes(),
+                "Harus ditolak: {$url}"
+            );
+        }
+    }
+
+    #[Test]
     public function it_extracts_video_id_from_common_formats(): void
     {
         $this->assertEquals('dQw4w9WgXcQ', ValidYouTubeUrl::extractVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ'));

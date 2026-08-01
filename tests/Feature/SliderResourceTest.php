@@ -65,6 +65,36 @@ class SliderResourceTest extends TestCase
         $this->assertEquals(['Pertama', 'Kedua'], $titles);
     }
 
+    public function test_slider_link_rejects_non_http_schemes(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateSlider::class)
+            ->fillForm([
+                'title' => 'Banner Bahaya',
+                'link' => 'javascript://alert(1)',
+                'image' => UploadedFile::fake()->image('banner.jpg', 1200, 400),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['link']);
+    }
+
+    public function test_slider_link_accepts_http_and_https_schemes(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateSlider::class)
+            ->fillForm([
+                'title' => 'Banner Aman',
+                'link' => 'https://disdikpora.karangasemkab.go.id',
+                'image' => UploadedFile::fake()->image('banner.jpg', 1200, 400),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+    }
+
     public function test_redaksi_role_can_manage_sliders(): void
     {
         $redaksi = User::factory()->create();

@@ -154,14 +154,15 @@ class RolePermissionSeeder extends Seeder
 
     /**
      * Pastikan user admin seeder memiliki peran Super Admin.
-     * Tidak menimpa peran lain yang di-assign manual lewat panel.
+     * Menggunakan assignRole (aditif) agar peran lain yang
+     * di-assign manual lewat panel tidak ikut terhapus.
      */
     private function assignSuperAdminToAdminUser(): void
     {
         $admin = User::where('email', 'admin@disdikpora.karangasemkab.go.id')->first();
 
         if ($admin !== null && ! $admin->hasRole('super_admin')) {
-            $admin->syncRoles(['super_admin']);
+            $admin->assignRole('super_admin');
         }
     }
 

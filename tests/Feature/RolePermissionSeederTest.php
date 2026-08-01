@@ -99,4 +99,19 @@ class RolePermissionSeederTest extends TestCase
         $this->assertNotNull($admin);
         $this->assertTrue($admin->hasRole('super_admin'));
     }
+
+    public function test_re_seeding_keeps_manually_assigned_roles_on_admin_user(): void
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@disdikpora.karangasemkab.go.id')->firstOrFail();
+        $admin->assignRole('admin_ppid_sop');
+
+        $this->seed(RolePermissionSeeder::class);
+
+        $admin->refresh();
+
+        $this->assertTrue($admin->hasRole('super_admin'));
+        $this->assertTrue($admin->hasRole('admin_ppid_sop'));
+    }
 }

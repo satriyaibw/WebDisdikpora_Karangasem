@@ -89,6 +89,7 @@ class AlbumResource extends Resource
                                     ->disk('public')
                                     ->directory('images/galeri')
                                     ->imageEditor()
+                                    ->maxSize(20480)
                                     ->saveUploadedFileUsing(fn (Forms\Components\FileUpload $component, TemporaryUploadedFile $file): string => ImageOptimizer::convertToWebp($file, 'galeri'))
                                     ->required(),
                                 Forms\Components\TextInput::make('caption')

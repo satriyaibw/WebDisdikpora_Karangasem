@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\Auditable;
+use App\Models\Traits\DeletesOrphanedFiles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,7 +15,14 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Slider extends Model
 {
-    use Auditable, HasFactory;
+    use Auditable, DeletesOrphanedFiles, HasFactory;
+
+    /**
+     * Kolom penyimpan file gambar di disk `public`.
+     *
+     * @var array<int, string>
+     */
+    protected array $fileAttributes = ['image'];
 
     /**
      * The attributes that are mass assignable.

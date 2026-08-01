@@ -69,6 +69,7 @@ class SliderResource extends Resource
                             ->disk('public')
                             ->directory('images/slider')
                             ->imageEditor()
+                            ->maxSize(20480)
                             ->saveUploadedFileUsing(fn (Forms\Components\FileUpload $component, TemporaryUploadedFile $file): string => ImageOptimizer::convertToWebp($file, 'slider'))
                             ->required()
                             ->helperText('Otomatis dikompresi dan dikonversi ke format WebP.'),
@@ -82,6 +83,7 @@ class SliderResource extends Resource
                         Forms\Components\TextInput::make('link')
                             ->label('Tautan CTA')
                             ->url()
+                            ->rules(['regex:/^https?:\/\//i'])
                             ->maxLength(500),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Urutan Tampil')

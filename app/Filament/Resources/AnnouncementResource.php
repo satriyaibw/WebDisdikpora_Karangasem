@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class AnnouncementResource extends Resource
@@ -88,7 +89,7 @@ class AnnouncementResource extends Resource
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(5120)
                             ->rules(['mimetypes:application/pdf'])
-                            ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => $file->getClientOriginalName())
+                            ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => static::safeStoredFileName($file->getClientOriginalName()))
                             ->helperText('Hanya berkas PDF, maksimal 5 MB.'),
                         Forms\Components\Toggle::make('is_important')
                             ->label('Pengumuman Penting')
@@ -173,5 +174,20 @@ class AnnouncementResource extends Resource
             'create' => Pages\CreateAnnouncement::route('/create'),
             'edit' => Pages\EditAnnouncement::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Nama file aman untuk lampiran PDF.
+     *
+     * Nama asli dipertahankan (dibersihkan dari segmen path & karakter
+     * berbahaya) lalu diberi suffix acak agar unik di disk.
+     */
+    public static function safeStoredFileName(string $originalName): string
+    {
+        $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+        $safeName = $safeName !== '' ? $safeName : 'lampiran';
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION)) ?: 'pdf';
+
+        return Str::limit($safeName, 60, '').'-'.Str::lower(Str::random(8)).'.'.$extension;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\Auditable;
+use App\Models\Traits\DeletesOrphanedFiles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class News extends Model
 {
-    use Auditable, HasFactory;
+    use Auditable, DeletesOrphanedFiles, HasFactory;
+
+    /**
+     * Kolom penyimpan file gambar di disk `public`
+     * (dibersihkan otomatis saat hapus/ganti gambar).
+     *
+     * @var array<int, string>
+     */
+    protected array $fileAttributes = ['cover_image'];
 
     public const STATUS_DRAFT = 'draft';
 

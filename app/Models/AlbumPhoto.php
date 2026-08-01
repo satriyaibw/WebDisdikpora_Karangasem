@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\Auditable;
+use App\Models\Traits\DeletesOrphanedFiles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AlbumPhoto extends Model
 {
-    use Auditable, HasFactory;
+    use Auditable, DeletesOrphanedFiles, HasFactory;
+
+    /**
+     * Kolom penyimpan file foto di disk `public`.
+     *
+     * @var array<int, string>
+     */
+    protected array $fileAttributes = ['photo_path'];
 
     /**
      * The attributes that are mass assignable.

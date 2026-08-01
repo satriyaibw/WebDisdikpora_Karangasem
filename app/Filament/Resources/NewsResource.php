@@ -99,6 +99,7 @@ class NewsResource extends Resource
                             ->disk('public')
                             ->directory('images/berita')
                             ->imageEditor()
+                            ->maxSize(20480)
                             ->saveUploadedFileUsing(fn (Forms\Components\FileUpload $component, TemporaryUploadedFile $file): string => ImageOptimizer::convertToWebp($file, 'berita'))
                             ->helperText('Otomatis dikompresi dan dikonversi ke format WebP.'),
                     ])
@@ -240,22 +241,32 @@ class NewsResource extends Resource
         $publishedAt = $data['published_at'] ?? null;
 
         if ($status === News::STATUS_PUBLISHED) {
-            if ($publishedAt === null) {
+            if (blank($publishedAt)) {
                 $data['published_at'] = Carbon::now();
-            } elseif (Carbon::parse($publishedAt)->isFuture()) {
+            } elseif (static::parsePublishTime($publishedAt)->isFuture()) {
                 $data['status'] = News::STATUS_SCHEDULED;
             }
         }
 
-        if ($status === News::STATUS_SCHEDULED && $publishedAt !== null) {
-            $publishedAtValue = $publishedAt instanceof CarbonInterface ? $publishedAt : Carbon::parse($publishedAt);
-
-            if (! $publishedAtValue->isFuture()) {
+        if ($status === News::STATUS_SCHEDULED) {
+            if (blank($publishedAt)) {
+                $data['published_at'] = Carbon::now();
+                $data['status'] = News::STATUS_PUBLISHED;
+            } elseif (! static::parsePublishTime($publishedAt)->isFuture()) {
                 $data['status'] = News::STATUS_PUBLISHED;
             }
         }
 
         return $data;
+    }
+
+    /**
+     * Parse nilai `published_at` dari form (string atau Carbon).
+     * Nilai kosong tidak pernah sampai ke sini (sudah ditangani `blank()`).
+     */
+    private static function parsePublishTime(mixed $value): CarbonInterface
+    {
+        return $value instanceof CarbonInterface ? $value : Carbon::parse($value);
     }
 
     public static function getPages(): array

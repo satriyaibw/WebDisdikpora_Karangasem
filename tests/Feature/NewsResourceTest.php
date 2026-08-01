@@ -9,6 +9,7 @@ use App\Models\News;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -140,6 +141,78 @@ class NewsResourceTest extends TestCase
         Artisan::call('news:publish-scheduled');
 
         $this->assertEquals(News::STATUS_SCHEDULED, $news->fresh()->status);
+    }
+
+    public function test_scheduled_news_without_published_at_is_published_immediately(): void
+    {
+        $data = NewsResource::resolvePublishStatus([
+            'status' => News::STATUS_SCHEDULED,
+            'published_at' => null,
+        ]);
+
+        $this->assertEquals(News::STATUS_PUBLISHED, $data['status']);
+        $this->assertNotNull($data['published_at']);
+    }
+
+    public function test_scheduled_news_with_empty_published_at_does_not_crash(): void
+    {
+        $data = NewsResource::resolvePublishStatus([
+            'status' => News::STATUS_SCHEDULED,
+            'published_at' => '',
+        ]);
+
+        $this->assertEquals(News::STATUS_PUBLISHED, $data['status']);
+        $this->assertNotNull($data['published_at']);
+    }
+
+    public function test_deleting_news_removes_cover_image_from_disk(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->getSeededAdmin();
+
+        $path = 'images/berita/sampul.webp';
+        Storage::disk('public')->put($path, 'data');
+
+        $news = News::create([
+            'title' => 'Hapus Sampul',
+            'slug' => 'hapus-sampul',
+            'content' => '<p>Isi</p>',
+            'author_id' => $admin->id,
+            'status' => News::STATUS_DRAFT,
+            'cover_image' => $path,
+        ]);
+
+        $news->delete();
+
+        $this->assertFalse(Storage::disk('public')->exists($path));
+    }
+
+    public function test_replacing_cover_image_removes_old_file_from_disk(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->getSeededAdmin();
+
+        $oldPath = 'images/berita/lama.webp';
+        $newPath = 'images/berita/baru.webp';
+        Storage::disk('public')->put($oldPath, 'a');
+        Storage::disk('public')->put($newPath, 'b');
+
+        $news = News::create([
+            'title' => 'Ganti Sampul',
+            'slug' => 'ganti-sampul',
+            'content' => '<p>Isi</p>',
+            'author_id' => $admin->id,
+            'status' => News::STATUS_DRAFT,
+            'cover_image' => $oldPath,
+        ]);
+
+        $news->cover_image = $newPath;
+        $news->save();
+
+        $this->assertFalse(Storage::disk('public')->exists($oldPath));
+        $this->assertTrue(Storage::disk('public')->exists($newPath));
     }
 
     public function test_redaksi_role_can_access_news_management(): void

@@ -28,6 +28,17 @@ class ImageOptimizer
     public const QUALITY = 80;
 
     /**
+     * Batas ukuran file sumber (byte) — cegah memory exhaustion
+     * saat file raksasa dimuat ke memori oleh GD.
+     */
+    public const MAX_SOURCE_SIZE = 20 * 1024 * 1024;
+
+    /**
+     * Batas dimensi sumber (pixel) — cegah memory exhaustion.
+     */
+    public const MAX_SOURCE_DIMENSION = 8192;
+
+    /**
      * Konversi file upload menjadi WebP dan simpan ke disk public.
      *
      * @return string path relatif hasil (contoh: images/berita/xxxx.webp)
@@ -40,6 +51,20 @@ class ImageOptimizer
 
         if (! is_string($sourcePath) || ! is_file($sourcePath)) {
             throw new InvalidArgumentException('File gambar tidak valid.');
+        }
+
+        if (filesize($sourcePath) > static::MAX_SOURCE_SIZE) {
+            throw new InvalidArgumentException('Ukuran gambar terlalu besar. Maksimal 20 MB.');
+        }
+
+        $dimensions = @getimagesize($sourcePath);
+
+        if ($dimensions === false) {
+            throw new InvalidArgumentException('Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP.');
+        }
+
+        if ($dimensions[0] > static::MAX_SOURCE_DIMENSION || $dimensions[1] > static::MAX_SOURCE_DIMENSION) {
+            throw new InvalidArgumentException('Dimensi gambar terlalu besar. Maksimal 8192 piksel.');
         }
 
         $image = @imagecreatefromstring((string) file_get_contents($sourcePath));
@@ -89,28 +114,39 @@ class ImageOptimizer
                 imageflip($image, IMG_FLIP_HORIZONTAL);
                 break;
             case 3:
-                $image = imagerotate($image, 180, 0);
+                $image = static::rotateOrKeep($image, 180);
                 break;
             case 4:
                 imageflip($image, IMG_FLIP_VERTICAL);
                 break;
             case 5:
-                $image = imagerotate($image, 270, 0);
+                $image = static::rotateOrKeep($image, 270);
                 imageflip($image, IMG_FLIP_HORIZONTAL);
                 break;
             case 6:
-                $image = imagerotate($image, -90, 0);
+                $image = static::rotateOrKeep($image, -90);
                 break;
             case 7:
-                $image = imagerotate($image, 90, 0);
+                $image = static::rotateOrKeep($image, 90);
                 imageflip($image, IMG_FLIP_HORIZONTAL);
                 break;
             case 8:
-                $image = imagerotate($image, 90, 0);
+                $image = static::rotateOrKeep($image, 90);
                 break;
         }
 
         return $image;
+    }
+
+    /**
+     * Rotasi gambar, kembalikan gambar asli bila rotasi gagal
+     * (imagerotate bisa mengembalikan false pada gambar non-truecolor).
+     */
+    private static function rotateOrKeep(\GdImage $image, int $angle): \GdImage
+    {
+        $rotated = imagerotate($image, $angle, 0);
+
+        return $rotated !== false ? $rotated : $image;
     }
 
     /**

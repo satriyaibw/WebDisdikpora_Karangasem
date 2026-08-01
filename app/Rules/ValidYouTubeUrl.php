@@ -17,6 +17,23 @@ use Illuminate\Contracts\Validation\ValidationRule;
 class ValidYouTubeUrl implements ValidationRule
 {
     /**
+     * Host yang diizinkan (termasuk varian nocookie untuk embed).
+     */
+    private const ALLOWED_HOSTS = [
+        'youtube.com',
+        'www.youtube.com',
+        'youtu.be',
+        'm.youtube.com',
+        'youtube-nocookie.com',
+        'www.youtube-nocookie.com',
+    ];
+
+    /**
+     * Format ID video YouTube (11 karakter: huruf, angka, `-`, `_`).
+     */
+    private const VIDEO_ID_PATTERN = '/^[A-Za-z0-9_-]{11}$/';
+
+    /**
      * Run the validation rule.
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -29,13 +46,15 @@ class ValidYouTubeUrl implements ValidationRule
 
         $host = strtolower((string) parse_url($value, PHP_URL_HOST));
 
-        if (! in_array($host, ['youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com'], true)) {
+        if (! in_array($host, self::ALLOWED_HOSTS, true)) {
             $fail('Tautan harus berasal dari YouTube (youtube.com / youtu.be).');
 
             return;
         }
 
-        if (static::extractVideoId($value) === null) {
+        $videoId = static::extractVideoId($value);
+
+        if ($videoId === null || preg_match(self::VIDEO_ID_PATTERN, $videoId) !== 1) {
             $fail('Tautan YouTube tidak memuat ID video yang valid.');
         }
     }
@@ -47,7 +66,7 @@ class ValidYouTubeUrl implements ValidationRule
     {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
 
-        if (in_array($host, ['youtu.be', 'youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+        if (in_array($host, self::ALLOWED_HOSTS, true)) {
             $path = (string) parse_url($url, PHP_URL_PATH);
             $query = parse_url($url, PHP_URL_QUERY);
 

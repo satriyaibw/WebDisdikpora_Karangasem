@@ -64,6 +64,32 @@ class AlbumResourceTest extends TestCase
         ]);
     }
 
+    public function test_deleting_album_removes_photo_files_from_disk(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateAlbum::class)
+            ->fillForm([
+                'title' => 'Album Akan Dihapus',
+                'photos' => [
+                    ['photo_path' => [UploadedFile::fake()->image('foto.jpg', 800, 600)], 'caption' => null],
+                ],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $album = Album::where('title', 'Album Akan Dihapus')->firstOrFail();
+        $path = $album->photos->first()->photo_path;
+
+        $this->assertTrue(Storage::disk('public')->exists($path));
+
+        $album->delete();
+
+        $this->assertFalse(Storage::disk('public')->exists($path));
+        $this->assertDatabaseMissing('album_photos', ['album_id' => $album->id]);
+    }
+
     public function test_redaksi_role_can_manage_albums(): void
     {
         $redaksi = User::factory()->create();

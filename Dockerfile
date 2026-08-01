@@ -23,6 +23,7 @@ RUN apk add --no-cache \
         zip \
         opcache \
         gd \
+        exif \
     && pecl install redis \
     && docker-php-ext-enable redis
 

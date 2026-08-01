@@ -68,6 +68,31 @@ class ImageOptimizerTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_files_larger_than_max_source_size(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        ImageOptimizer::convertToWebp(UploadedFile::fake()->create('besar.jpg', 25000), 'berita');
+    }
+
+    #[Test]
+    public function it_rejects_images_wider_than_max_source_dimension(): void
+    {
+        $source = imagecreatetruecolor(9000, 100);
+        $tempPath = tempnam(sys_get_temp_dir(), 'img');
+        imagepng($source, $tempPath);
+        imagedestroy($source);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+
+            ImageOptimizer::convertToWebp(new UploadedFile($tempPath, 'raksasa.png', 'image/png'), 'berita');
+        } finally {
+            @unlink($tempPath);
+        }
+    }
+
+    #[Test]
     public function it_accepts_webp_source_files(): void
     {
         $source = imagecreatetruecolor(10, 10);
