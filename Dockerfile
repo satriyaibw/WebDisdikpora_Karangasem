@@ -34,6 +34,7 @@ RUN addgroup -g ${GID} www || true \
 WORKDIR /var/www/html
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/zz-disdikpora.ini
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 USER www
 
