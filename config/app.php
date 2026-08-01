@@ -86,6 +86,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Initial Administrator Password
+    |--------------------------------------------------------------------------
+    |
+    | Nilai default untuk password user admin yang dibuat oleh seeder awal.
+    | HARUS diakses lewat config() di luar file konfigurasi (bukan env()),
+    | karena env() bernilai null setelah perintah `config:cache` dijalankan.
+    | Jika tidak diset pada .env, seeder akan menghasilkan password acak.
+    |
+    */
+
+    'admin_initial_password' => env('ADMIN_INITIAL_PASSWORD'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

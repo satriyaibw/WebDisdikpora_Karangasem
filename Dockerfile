@@ -28,7 +28,7 @@ RUN apk add --no-cache \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN addgroup -g ${GID} www || true \
+RUN addgroup -g ${GID} www \
     && adduser -u ${UID} -G www -s /bin/sh -D www
 
 WORKDIR /var/www/html

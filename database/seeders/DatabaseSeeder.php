@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,13 +20,21 @@ class DatabaseSeeder extends Seeder
 
     private function seedAdminUser(): void
     {
-        User::query()->updateOrCreate(
-            ['email' => 'admin@disdikpora.karangasemkab.go.id'],
-            [
-                'name' => 'Administrator Disdikpora',
-                'password' => Hash::make(env('ADMIN_INITIAL_PASSWORD', 'Password!2026')),
-            ]
-        );
+        $admin = User::query()->firstOrNew(['email' => 'admin@disdikpora.karangasemkab.go.id']);
+        $admin->name = 'Administrator Disdikpora';
+
+        $explicitPassword = config('app.admin_initial_password');
+
+        if (! $admin->exists || $explicitPassword) {
+            $password = $explicitPassword ?? Str::password();
+            $admin->password = $password;
+
+            if (! $explicitPassword) {
+                $this->command->warn("ADMIN_INITIAL_PASSWORD tidak diset di .env - password admin acak: {$password}");
+            }
+        }
+
+        $admin->save();
     }
 
     private function seedSettings(): void
