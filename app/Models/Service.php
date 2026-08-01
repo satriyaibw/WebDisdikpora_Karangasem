@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Dokumen informasi publik PPID (MasterPlan 4.1) — UU KIP No. 14 Tahun 2008.
+ * Katalog Layanan Publik per Bidang (MasterPlan 5.1).
+ *
+ * Menyimpan rincian layanan masyarakat: persyaratan, alur prosedur,
+ * SLA, biaya, kontak PIC, dan template formulir (PDF opsional).
  */
-class PpidDocument extends Model
+class Service extends Model
 {
     use Auditable, DeletesOrphanedFiles, FormatsFileSize, HasFactory;
 
@@ -21,7 +24,7 @@ class PpidDocument extends Model
      *
      * @var array<int, string>
      */
-    protected array $fileAttributes = ['file_path'];
+    protected array $fileAttributes = ['form_template'];
 
     public const STATUS_DRAFT = 'draft';
 
@@ -35,13 +38,19 @@ class PpidDocument extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'title',
-        'doc_number',
-        'year',
+        'name',
+        'slug',
+        'bidang_id',
+        'short_description',
         'description',
-        'file_path',
+        'requirements',
+        'procedure',
+        'estimated_time',
+        'cost',
+        'pic_name',
+        'pic_contact',
+        'form_template',
         'file_size',
-        'category_id',
         'status',
     ];
 
@@ -53,17 +62,17 @@ class PpidDocument extends Model
     protected function casts(): array
     {
         return [
-            'year' => 'integer',
+            'bidang_id' => 'integer',
             'file_size' => 'integer',
         ];
     }
 
     /**
-     * Kategori PPID dari dokumen ini.
+     * Bidang/Sub-Bagian pemilik layanan ini.
      */
-    public function category(): BelongsTo
+    public function bidang(): BelongsTo
     {
-        return $this->belongsTo(PpidCategory::class, 'category_id');
+        return $this->belongsTo(Bidang::class, 'bidang_id');
     }
 
     /**

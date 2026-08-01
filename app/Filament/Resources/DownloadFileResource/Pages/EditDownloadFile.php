@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\PpidDocumentResource\Pages;
+namespace App\Filament\Resources\DownloadFileResource\Pages;
 
-use App\Filament\Resources\PpidDocumentResource;
+use App\Filament\Resources\DownloadFileResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditPpidDocument extends EditRecord
+class EditDownloadFile extends EditRecord
 {
-    protected static string $resource = PpidDocumentResource::class;
+    protected static string $resource = DownloadFileResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -24,7 +24,7 @@ class EditPpidDocument extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $data['file_size'] = filled($data['file_path'])
-            ? PpidDocumentResource::resolveStoredFileSize($data['file_path'])
+            ? DownloadFileResource::resolveStoredFileSize($data['file_path'])
             : null;
 
         return $data;

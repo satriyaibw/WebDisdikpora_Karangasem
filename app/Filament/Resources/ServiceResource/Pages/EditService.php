@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\PpidDocumentResource\Pages;
+namespace App\Filament\Resources\ServiceResource\Pages;
 
-use App\Filament\Resources\PpidDocumentResource;
+use App\Filament\Resources\ServiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditPpidDocument extends EditRecord
+class EditService extends EditRecord
 {
-    protected static string $resource = PpidDocumentResource::class;
+    protected static string $resource = ServiceResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -23,8 +23,8 @@ class EditPpidDocument extends EditRecord
      */
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['file_size'] = filled($data['file_path'])
-            ? PpidDocumentResource::resolveStoredFileSize($data['file_path'])
+        $data['file_size'] = filled($data['form_template'])
+            ? ServiceResource::resolveStoredFileSize($data['form_template'])
             : null;
 
         return $data;

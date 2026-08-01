@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\PpidDocumentResource\Pages;
+namespace App\Filament\Resources\SopDocumentResource\Pages;
 
-use App\Filament\Resources\PpidDocumentResource;
+use App\Filament\Resources\SopDocumentResource;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreatePpidDocument extends CreateRecord
+class CreateSopDocument extends CreateRecord
 {
-    protected static string $resource = PpidDocumentResource::class;
+    protected static string $resource = SopDocumentResource::class;
 
     /**
      * Isi `file_size` otomatis dari berkas yang sudah tersimpan di disk,
@@ -16,7 +16,7 @@ class CreatePpidDocument extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['file_size'] = filled($data['file_path'])
-            ? PpidDocumentResource::resolveStoredFileSize($data['file_path'])
+            ? SopDocumentResource::resolveStoredFileSize($data['file_path'])
             : null;
 
         return $data;

@@ -7,12 +7,14 @@ use App\Models\Traits\DeletesOrphanedFiles;
 use App\Models\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Dokumen informasi publik PPID (MasterPlan 4.1) — UU KIP No. 14 Tahun 2008.
+ * Pusat Unduhan Berkas (MasterPlan 5.3).
+ *
+ * Formulir resmi & Petunjuk Teknis (Juknis) yang sering dibutuhkan
+ * sekolah/masyarakat, dikelompokkan berdasarkan jenis berkas.
  */
-class PpidDocument extends Model
+class DownloadFile extends Model
 {
     use Auditable, DeletesOrphanedFiles, FormatsFileSize, HasFactory;
 
@@ -22,6 +24,12 @@ class PpidDocument extends Model
      * @var array<int, string>
      */
     protected array $fileAttributes = ['file_path'];
+
+    public const TYPE_FORMULIR = 'formulir';
+
+    public const TYPE_JUKNIS = 'juknis';
+
+    public const TYPE_LAINNYA = 'lainnya';
 
     public const STATUS_DRAFT = 'draft';
 
@@ -36,12 +44,11 @@ class PpidDocument extends Model
      */
     protected $fillable = [
         'title',
-        'doc_number',
-        'year',
+        'slug',
         'description',
+        'type',
         'file_path',
         'file_size',
-        'category_id',
         'status',
     ];
 
@@ -53,17 +60,22 @@ class PpidDocument extends Model
     protected function casts(): array
     {
         return [
-            'year' => 'integer',
             'file_size' => 'integer',
         ];
     }
 
     /**
-     * Kategori PPID dari dokumen ini.
+     * Opsi jenis berkas untuk form & filter panel admin.
+     *
+     * @return array<string, string>
      */
-    public function category(): BelongsTo
+    public static function typeOptions(): array
     {
-        return $this->belongsTo(PpidCategory::class, 'category_id');
+        return [
+            self::TYPE_FORMULIR => 'Formulir',
+            self::TYPE_JUKNIS => 'Petunjuk Teknis (Juknis)',
+            self::TYPE_LAINNYA => 'Lainnya',
+        ];
     }
 
     /**

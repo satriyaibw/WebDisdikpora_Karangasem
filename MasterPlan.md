@@ -140,7 +140,7 @@ Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** un
   - Pendataan jenis layanan per Bidang (e.g., Mutasi Siswa, Legalisir Ijazah, Rekomendasi Penelitian, Operasional PAUD).
   - Field Rincian Layanan: Persyaratan, Bagan Alur Prosedur, Estimasi Waktu (SLA), Biaya (Rp0 / Gratis), Kontak Penanggung Jawab, dan File Template Formulir.
 - [ ] **5.2 Engine Repositori Dokumen SOP**
-  - Pendataan SOP per Bidang/Sub-Bagian (Sekretariat, Pembinaan SD, Pembinaan SMP, Pemuda & Olahraga).
+  - Pendataan SOP per Bidang/Sub-Bagian (Sekretariat, Pembinaan Pendidikan PAUD & PNF, Pembinaan Pendidikan SD, Pembinaan Pendidikan SMP, Pendidik & Tenaga Kependidikan, Pemuda & Olahraga).
   - Upload Berkas PDF SOP & Metadata (Nomor SOP, Tanggal Pengesahan, Judul).
 - [ ] **5.3 Center Pusat Unduhan Berkas (Download Center)**
   - Pengelompokan formulir resmi dan Petunjuk Teknis (Juknis) yang sering dibutuhkan sekolah/masyarakat.

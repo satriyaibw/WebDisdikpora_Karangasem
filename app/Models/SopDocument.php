@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Dokumen informasi publik PPID (MasterPlan 4.1) — UU KIP No. 14 Tahun 2008.
+ * Dokumen Standar Operasional Prosedur (MasterPlan 5.2).
+ *
+ * Direktori SOP per Bidang/Sub-Bagian lengkap dengan berkas PDF,
+ * nomor SOP, dan tanggal pengesahan.
  */
-class PpidDocument extends Model
+class SopDocument extends Model
 {
     use Auditable, DeletesOrphanedFiles, FormatsFileSize, HasFactory;
 
@@ -36,12 +39,13 @@ class PpidDocument extends Model
      */
     protected $fillable = [
         'title',
-        'doc_number',
-        'year',
+        'slug',
+        'sop_number',
+        'issuance_date',
         'description',
+        'bidang_id',
         'file_path',
         'file_size',
-        'category_id',
         'status',
     ];
 
@@ -53,17 +57,18 @@ class PpidDocument extends Model
     protected function casts(): array
     {
         return [
-            'year' => 'integer',
+            'issuance_date' => 'date',
+            'bidang_id' => 'integer',
             'file_size' => 'integer',
         ];
     }
 
     /**
-     * Kategori PPID dari dokumen ini.
+     * Bidang/Sub-Bagian pemilik SOP ini.
      */
-    public function category(): BelongsTo
+    public function bidang(): BelongsTo
     {
-        return $this->belongsTo(PpidCategory::class, 'category_id');
+        return $this->belongsTo(Bidang::class, 'bidang_id');
     }
 
     /**
