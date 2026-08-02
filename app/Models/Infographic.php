@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\Auditable;
 use App\Models\Traits\DeletesOrphanedFiles;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,5 +44,13 @@ class Infographic extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Hanya infografis yang aktif (tampil di portal publik).
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 }
