@@ -151,7 +151,7 @@ Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** un
 > **Fokus:** Menyajikan tampilan luar yang modern, bersih, cepat, dan responsif di semua ukuran layar.
 
 - [ ] **6.1 Master Layout & Design System**
-  - Skema warna identitas Karangasem (Merah, Emas, Putih, Hitam).
+  - Skema warna identitas portal publik (Biru `#2196F3`, Emas, Putih, Hitam). *Catatan: warna biru khusus tampilan publik; tema admin Filament tetap merah.*
   - Header (Navigasi Utama, Search Bar, Waktu WITA) & Footer Resmi Pemerintah.
 - [ ] **6.2 Halaman Utama (Homepage)**
   - Hero Slider Banner & Pengumuman Running Text.
