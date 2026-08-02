@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DownloadCategory;
 use App\Models\DownloadFile;
 use Database\Seeders\Traits\SeedsDummyPdfs;
 use Illuminate\Database\Seeder;
@@ -12,6 +13,7 @@ use Illuminate\Database\Seeder;
  * Idempotent — aman dijalankan berulang kali (updateOrCreate berdasarkan
  * slug, bukan judul, sehingga perubahan judul tidak membuat duplikat).
  * Berkas PDF dummy dibuat di disk `public` (pola PpidSeeder).
+ * Kategori ditautkan lewat `category_slug` ke `download_categories`.
  */
 class DownloadFileSeeder extends Seeder
 {
@@ -25,19 +27,19 @@ class DownloadFileSeeder extends Seeder
             'slug' => 'formulir-pendaftaran-peserta-didik-baru',
             'title' => 'Formulir Pendaftaran Peserta Didik Baru',
             'description' => 'Formulir resmi pendaftaran peserta didik baru jenjang SD/SMP.',
-            'type' => 'formulir',
+            'category_slug' => 'formulir',
         ],
         [
             'slug' => 'formulir-pengajuan-mutasi-siswa',
             'title' => 'Formulir Pengajuan Mutasi Siswa',
             'description' => 'Formulir pengajuan perpindahan peserta didik antar sekolah.',
-            'type' => 'formulir',
+            'category_slug' => 'formulir',
         ],
         [
             'slug' => 'juknis-bantuan-operasional-sekolah',
             'title' => 'Juknis Bantuan Operasional Sekolah (BOS)',
             'description' => 'Petunjuk teknis pengelolaan dana Bantuan Operasional Sekolah.',
-            'type' => 'juknis',
+            'category_slug' => 'juknis',
         ],
     ];
 
@@ -51,7 +53,7 @@ class DownloadFileSeeder extends Seeder
                 [
                     'title' => $file['title'],
                     'description' => $file['description'],
-                    'type' => $file['type'],
+                    'category_id' => DownloadCategory::where('slug', $file['category_slug'])->value('id'),
                     'file_path' => $filePath,
                     'file_size' => $this->ensureDummyPdf($filePath),
                     'status' => DownloadFile::STATUS_PUBLISHED,

@@ -6,6 +6,7 @@ use App\Filament\Resources\DownloadFileResource;
 use App\Filament\Resources\DownloadFileResource\Pages\CreateDownloadFile;
 use App\Filament\Resources\DownloadFileResource\Pages\EditDownloadFile;
 use App\Filament\Resources\DownloadFileResource\Pages\ListDownloadFiles;
+use App\Models\DownloadCategory;
 use App\Models\DownloadFile;
 use App\Models\User;
 use Database\Seeders\DownloadFileSeeder;
@@ -37,7 +38,7 @@ class DownloadFileResourceTest extends TestCase
                 'title' => 'Formulir Uji Unduhan',
                 'slug' => 'formulir-uji-unduhan',
                 'description' => 'Formulir untuk pengujian.',
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_PUBLISHED,
                 'file_path' => UploadedFile::fake()->createWithContent('formulir-uji.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"),
             ])
@@ -46,7 +47,7 @@ class DownloadFileResourceTest extends TestCase
 
         $file = DownloadFile::where('title', 'Formulir Uji Unduhan')->firstOrFail();
 
-        $this->assertEquals(DownloadFile::TYPE_FORMULIR, $file->type);
+        $this->assertEquals('formulir', $file->category?->slug);
         $this->assertEquals(DownloadFile::STATUS_PUBLISHED, $file->status);
         $this->assertTrue(Storage::disk('public')->exists($file->file_path));
         $this->assertStringEndsWith('.pdf', $file->file_path);
@@ -70,11 +71,11 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => '',
-                'type' => '',
+                'category_id' => null,
                 'status' => DownloadFile::STATUS_DRAFT,
             ])
             ->call('create')
-            ->assertHasFormErrors(['title' => 'required', 'type' => 'required', 'file_path' => 'required']);
+            ->assertHasFormErrors(['title' => 'required', 'category_id' => 'required', 'file_path' => 'required']);
     }
 
     public function test_download_file_rejects_non_pdf(): void
@@ -85,7 +86,7 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => 'Berkas Salah Format',
-                'type' => DownloadFile::TYPE_JUKNIS,
+                'category_id' => DownloadCategory::where('slug', 'juknis')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->create('juknis.txt', 100),
             ])
@@ -101,7 +102,7 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => 'Berkas PDF Palsu',
-                'type' => DownloadFile::TYPE_LAINNYA,
+                'category_id' => DownloadCategory::where('slug', 'lainnya')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('palsu.pdf', 'Ini bukan PDF sama sekali.'),
             ])
@@ -119,7 +120,7 @@ class DownloadFileResourceTest extends TestCase
         Livewire::test(CreateDownloadFile::class)
             ->fillForm([
                 'title' => 'Berkas PDF Besar',
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('besar.pdf', $oversized),
             ])
@@ -136,7 +137,7 @@ class DownloadFileResourceTest extends TestCase
             ->fillForm([
                 'title' => 'Berkas Status',
                 'slug' => 'berkas-status',
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('status.pdf', "%PDF-1.4\n%%EOF"),
             ])
@@ -147,13 +148,13 @@ class DownloadFileResourceTest extends TestCase
         $this->assertEquals(DownloadFile::STATUS_DRAFT, $file->status);
 
         Livewire::test(EditDownloadFile::class, ['record' => $file->getRouteKey()])
-            ->fillForm(['status' => DownloadFile::STATUS_ARCHIVED, 'type' => DownloadFile::TYPE_JUKNIS])
+            ->fillForm(['status' => DownloadFile::STATUS_ARCHIVED, 'category_id' => DownloadCategory::where('slug', 'juknis')->value('id')])
             ->call('save')
             ->assertHasNoFormErrors();
 
         $file->refresh();
         $this->assertEquals(DownloadFile::STATUS_ARCHIVED, $file->status);
-        $this->assertEquals(DownloadFile::TYPE_JUKNIS, $file->type);
+        $this->assertEquals('juknis', $file->category?->slug);
     }
 
     public function test_replacing_file_on_update_removes_old_pdf(): void
@@ -164,7 +165,7 @@ class DownloadFileResourceTest extends TestCase
         $file = DownloadFile::create([
             'title' => 'Ganti Berkas Unduhan',
             'slug' => 'ganti-berkas-unduhan',
-            'type' => DownloadFile::TYPE_FORMULIR,
+            'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
             'file_path' => $oldPath,
             'file_size' => Storage::disk('public')->size($oldPath),
             'status' => DownloadFile::STATUS_DRAFT,
@@ -190,7 +191,7 @@ class DownloadFileResourceTest extends TestCase
         $file = DownloadFile::create([
             'title' => 'Hapus Berkas Unduhan',
             'slug' => 'hapus-berkas-unduhan',
-            'type' => DownloadFile::TYPE_JUKNIS,
+            'category_id' => DownloadCategory::where('slug', 'juknis')->value('id'),
             'file_path' => $path,
             'file_size' => Storage::disk('public')->size($path),
             'status' => DownloadFile::STATUS_DRAFT,
@@ -223,7 +224,7 @@ class DownloadFileResourceTest extends TestCase
             ->fillForm([
                 'title' => 'Berkas Tanpa Slug',
                 'slug' => '',
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('slug-kosong.pdf', "%PDF-1.4\n%%EOF"),
             ])
@@ -234,7 +235,7 @@ class DownloadFileResourceTest extends TestCase
             ->fillForm([
                 'title' => 'Berkas Slug Duplikat',
                 'slug' => $existing->slug,
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('slug-duplikat.pdf', "%PDF-1.4\n%%EOF"),
             ])
@@ -251,7 +252,7 @@ class DownloadFileResourceTest extends TestCase
             ->fillForm([
                 'title' => 'Berkas Slug Salah Format',
                 'slug' => 'Berkas Slug Salah / X',
-                'type' => DownloadFile::TYPE_FORMULIR,
+                'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
                 'status' => DownloadFile::STATUS_DRAFT,
                 'file_path' => UploadedFile::fake()->createWithContent('slug-salah.pdf', "%PDF-1.4\n%%EOF"),
             ])
@@ -267,7 +268,7 @@ class DownloadFileResourceTest extends TestCase
         $file = DownloadFile::create([
             'title' => 'Berkas Tanpa PDF',
             'slug' => 'berkas-tanpa-pdf',
-            'type' => DownloadFile::TYPE_FORMULIR,
+            'category_id' => DownloadCategory::where('slug', 'formulir')->value('id'),
             'status' => DownloadFile::STATUS_DRAFT,
             'file_path' => 'lampiran/unduhan/hilang.pdf',
         ]);

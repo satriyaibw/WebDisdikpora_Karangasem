@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\Auditable;
 use App\Models\Traits\DeletesOrphanedFiles;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -49,5 +50,13 @@ class Slider extends Model
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Hanya slider yang aktif (tampil di portal publik).
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 }

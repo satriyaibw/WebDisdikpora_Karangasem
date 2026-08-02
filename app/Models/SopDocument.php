@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Models\Traits\Auditable;
 use App\Models\Traits\DeletesOrphanedFiles;
 use App\Models\Traits\FormatsFileSize;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Dokumen Standar Operasional Prosedur (MasterPlan 5.2).
@@ -83,5 +85,33 @@ class SopDocument extends Model
             self::STATUS_PUBLISHED => 'Terbit',
             self::STATUS_ARCHIVED => 'Arsip',
         ];
+    }
+
+    /**
+     * Hanya dokumen SOP ber-status published.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    /**
+     * Apakah berkas PDF benar-benar ada di disk `public`
+     * (menghindari tautan/iframe rusak bila berkas dihapus tanpa update baris).
+     */
+    public function getFileExistsAttribute(): bool
+    {
+        return $this->file_path !== null
+            && Storage::disk('public')->exists($this->file_path);
+    }
+
+    /**
+     * URL publik berkas PDF, null bila berkas tidak tersedia.
+     */
+    public function getFileUrlAttribute(): ?string
+    {
+        return $this->file_exists
+            ? Storage::disk('public')->url($this->file_path)
+            : null;
     }
 }

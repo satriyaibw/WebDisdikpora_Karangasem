@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Models\Traits\Auditable;
 use App\Models\Traits\DeletesOrphanedFiles;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Berita & artikel (MasterPlan 3.1).
@@ -83,10 +85,35 @@ class News extends Model
 
     /**
      * Tambah jumlah dilihat (dipakai frontend Fase 6).
+     *
+     * Dibatasi satu kenaikan per berita per 24 jam lewat cache.
+     * Kenaikan dilakukan di dalam lock agar dua request konkuren
+     * tidak menggandakan hitungan (has + increment bukan operasi atomik).
      */
     public function recordView(): void
     {
-        $this->increment('views_count');
+        $cacheKey = 'news-viewed-'.$this->getKey();
+
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        $lock = Cache::lock('news-view-lock-'.$this->getKey(), 10);
+
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            if (Cache::has($cacheKey)) {
+                return;
+            }
+
+            $this->increment('views_count');
+            Cache::put($cacheKey, true, now()->addDay());
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
@@ -102,5 +129,27 @@ class News extends Model
             self::STATUS_PUBLISHED => 'Terbit',
             self::STATUS_ARCHIVED => 'Arsip',
         ];
+    }
+
+    /**
+     * Hanya berita ber-status published (dengan jadwal `published_at`).
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query
+            ->where('status', self::STATUS_PUBLISHED)
+            ->where(fn (Builder $q) => $q
+                ->whereNull('published_at')
+                ->orWhere('published_at', '<=', now()));
+    }
+
+    /**
+     * Apakah berita ini boleh tampil di portal publik
+     * (sama dengan scopePublished, untuk guard halaman detail).
+     */
+    public function isPublishedForPublic(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED
+            && ($this->published_at === null || $this->published_at->lte(now()));
     }
 }

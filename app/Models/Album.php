@@ -6,6 +6,7 @@ use App\Models\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -31,6 +32,16 @@ class Album extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(AlbumPhoto::class);
+    }
+
+    /**
+     * Foto sampul album — foto dengan `sort_order` terkecil.
+     * (Menghindari query tambahan per album di portal publik.)
+     */
+    public function coverPhoto(): HasOne
+    {
+        return $this->hasOne(AlbumPhoto::class)
+            ->ofMany(['sort_order' => 'min', 'id' => 'min']);
     }
 
     /**

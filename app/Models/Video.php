@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\Auditable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,5 +44,13 @@ class Video extends Model
             self::STATUS_PUBLISHED => 'Terbit',
             self::STATUS_ARCHIVED => 'Arsip',
         ];
+    }
+
+    /**
+     * Hanya video ber-status published.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PUBLISHED);
     }
 }

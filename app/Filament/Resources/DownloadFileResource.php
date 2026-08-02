@@ -82,10 +82,11 @@ class DownloadFileResource extends Resource
                             ->maxLength(255)
                             ->alphaDash()
                             ->helperText('Otomatis diisi dari nama berkas.'),
-                        Forms\Components\Select::make('type')
-                            ->label('Jenis Berkas')
-                            ->options(DownloadFile::typeOptions())
-                            ->default(DownloadFile::TYPE_FORMULIR)
+                        Forms\Components\Select::make('category_id')
+                            ->label('Kategori Berkas')
+                            ->relationship('category', 'name')
+                            ->searchable()
+                            ->preload()
                             ->required(),
                         Forms\Components\Textarea::make('description')
                             ->label('Keterangan')
@@ -143,15 +144,11 @@ class DownloadFileResource extends Resource
                     ->label('Slug')
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('type')
-                    ->label('Jenis Berkas')
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Kategori Berkas')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        DownloadFile::TYPE_FORMULIR => 'info',
-                        DownloadFile::TYPE_JUKNIS => 'warning',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => DownloadFile::typeOptions()[$state] ?? $state),
+                    ->color('info')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('file_size')
                     ->label('Ukuran')
                     ->formatStateUsing(fn (?int $state): string => DownloadFile::formatFileSize($state))
@@ -183,9 +180,9 @@ class DownloadFileResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options(DownloadFile::statusOptions()),
-                Tables\Filters\SelectFilter::make('type')
-                    ->label('Jenis Berkas')
-                    ->options(DownloadFile::typeOptions()),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->label('Kategori Berkas')
+                    ->relationship('category', 'name'),
             ])
             ->actions([
                 Tables\Actions\Action::make('download')

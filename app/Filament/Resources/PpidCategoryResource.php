@@ -75,7 +75,8 @@ class PpidCategoryResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Otomatis diisi dari nama.'),
+                            ->regex('/^[a-z0-9][a-z0-9-]*$/')
+                            ->helperText('Otomatis diisi dari nama. Hanya huruf kecil, angka, dan tanda hubung.'),
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')
                             ->maxLength(1000)
