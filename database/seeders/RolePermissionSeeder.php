@@ -80,6 +80,12 @@ class RolePermissionSeeder extends Seeder
         'unduhan.create',
         'unduhan.update',
         'unduhan.delete',
+        'setting.read',
+        'setting.update',
+        'official.read',
+        'official.create',
+        'official.update',
+        'official.delete',
     ];
 
     /**

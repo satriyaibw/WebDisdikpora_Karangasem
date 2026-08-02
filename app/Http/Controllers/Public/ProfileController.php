@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bidang;
+use App\Models\Official;
 
 class ProfileController extends Controller
 {
@@ -14,8 +14,16 @@ class ProfileController extends Controller
 
     public function struktur()
     {
-        $bidangs = Bidang::orderBy('name')->get();
+        $tree = Official::active()
+            ->with([
+                'children' => fn ($query) => $query->active(),
+                'children.children' => fn ($query) => $query->active(),
+            ])
+            ->whereNull('parent_id')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
 
-        return view('pages.profil-struktur', compact('bidangs'));
+        return view('pages.profil-struktur', compact('tree'));
     }
 }

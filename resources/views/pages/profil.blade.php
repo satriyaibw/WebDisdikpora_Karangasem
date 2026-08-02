@@ -13,40 +13,25 @@
                         <h2 class="text-xl font-bold text-slate-900">Sambutan Kepala Dinas</h2>
                         <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">Sekretariat Dinas</span>
                     </div>
-                    <p class="mt-5 text-sm leading-7 text-slate-700">
-                        Assalamualaikum warahmatullahi wabarakatuh, salam sejahtera bagi kita semua.
-                    </p>
-                    <p class="mt-3 text-sm leading-7 text-slate-700">
-                        Selamat datang di portal resmi {{ settings('site.name', '') }}. Portal ini kami hadirkan sebagai
-                        wujud komitmen transparansi informasi publik serta upaya peningkatan kualitas layanan pendidikan,
-                        kepemudaan, dan olahraga di Kabupaten Karangasem. Melalui portal ini, masyarakat dapat mengakses
-                        berbagai layanan, berita, pengumuman, serta dokumen informasi publik dengan mudah dan cepat.
-                    </p>
-                    <p class="mt-3 text-sm leading-7 text-slate-700">
-                        Kami berharap kehadiran portal ini dapat mempermudah akses informasi bagi seluruh masyarakat.
-                        Saran dan masukan yang membangun sangat kami harapkan demi perbaikan pelayanan kami ke depan.
-                    </p>
+                    <div class="mt-5 text-sm leading-7 text-slate-700">
+                        {!! Purify::clean(settings('profile.welcome', 'Assalamualaikum warahmatullahi wabarakatuh, salam sejahtera bagi kita semua.')) !!}
+                    </div>
                     <p class="mt-6 text-sm font-semibold text-slate-900">Kepala Dinas,</p>
-                    <p class="mt-2 text-sm font-bold text-brand-700">{{ settings('site.short_name', '') }}</p>
+                    <p class="mt-2 text-sm font-bold text-brand-700">{{ settings('profile.kadis_name', settings('site.short_name', '')) }}</p>
                 </article>
 
                 <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-xl font-bold text-slate-900">Visi</h2>
                     <blockquote class="mt-4 border-l-4 border-gold-500 bg-gold-50 p-4 text-sm font-semibold italic leading-7 text-slate-800">
-                        "Terwujudnya sumber daya manusia yang unggul, berkarakter, berdaya saing, dan berbudaya menuju
-                        Karangasem yang aman, sejahtera, dan bahagia."
+                        "{{ settings('profile.vision', 'Terwujudnya sumber daya manusia yang unggul, berkarakter, berdaya saing, dan berbudaya menuju Karangasem yang aman, sejahtera, dan bahagia.') }}"
                     </blockquote>
                 </article>
 
                 <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-xl font-bold text-slate-900">Misi</h2>
-                    <ol class="mt-4 list-decimal space-y-3 pl-5 text-sm leading-7 text-slate-700">
-                        <li>Meningkatkan mutu dan pemerataan layanan pendidikan anak usia dini, dasar, dan menengah.</li>
-                        <li>Meningkatkan pembinaan dan pengembangan kepemudaan serta prestasi olahraga.</li>
-                        <li>Meningkatkan kapasitas dan profesionalisme tenaga pendidik dan kependidikan.</li>
-                        <li>Mewujudkan tata kelola pemerintahan dinas yang bersih, transparan, dan akuntabel.</li>
-                        <li>Meningkatkan partisipasi masyarakat dan dunia usaha dalam penyelenggaraan pendidikan.</li>
-                    </ol>
+                    <div class="mt-4 text-sm leading-7 text-slate-700">
+                        {!! Purify::clean(settings('profile.mission', '<ol class="list-decimal space-y-3 pl-5"><li>Meningkatkan mutu dan pemerataan layanan pendidikan anak usia dini, dasar, dan menengah.</li><li>Meningkatkan pembinaan dan pengembangan kepemudaan serta prestasi olahraga.</li><li>Meningkatkan kapasitas dan profesionalisme tenaga pendidik dan kependidikan.</li><li>Mewujudkan tata kelola pemerintahan dinas yang bersih, transparan, dan akuntabel.</li><li>Meningkatkan partisipasi masyarakat dan dunia usaha dalam penyelenggaraan pendidikan.</li></ol>')) !!}
+                    </div>
                 </article>
             </div>
 
@@ -54,8 +39,7 @@
                 <div class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                     <h3 class="text-base font-bold text-slate-900">Tugas & Fungsi</h3>
                     <p class="mt-3 text-sm leading-6 text-slate-600">
-                        Melaksanakan urusan pemerintahan daerah di bidang pendidikan, kepemudaan, dan olahraga
-                        berdasarkan asas otonomi dan tugas pembantuan.
+                        {{ settings('profile.duties', 'Melaksanakan urusan pemerintahan daerah di bidang pendidikan, kepemudaan, dan olahraga berdasarkan asas otonomi dan tugas pembantuan.') }}
                     </p>
                 </div>
                 <div class="rounded-2xl bg-brand-500 p-7 text-white shadow-sm">

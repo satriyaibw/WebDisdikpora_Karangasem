@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class Settings
 {
@@ -30,16 +30,29 @@ class Settings
         $values = Cache::remember(
             self::CACHE_KEY,
             self::TTL,
-            static fn (): array => DB::table('settings')
+            static fn (): array => Setting::query()
                 ->select('key', 'value')
                 ->get()
-                ->mapWithKeys(static fn (object $row): array => [
-                    $row->key => $row->value !== null ? (string) $row->value : null,
+                ->mapWithKeys(static fn (Setting $setting): array => [
+                    $setting->key => $setting->value,
                 ])
                 ->all()
         );
 
         return $values[$key] ?? $default;
+    }
+
+    /**
+     * Simpan (atau perbarui) satu setting dan invalidasi cache.
+     */
+    public static function set(string $key, ?string $value, string $group = 'general'): void
+    {
+        Setting::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'group' => $group]
+        );
+
+        self::flush();
     }
 
     /**

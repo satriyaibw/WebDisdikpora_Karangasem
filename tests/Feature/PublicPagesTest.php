@@ -419,4 +419,66 @@ class PublicPagesTest extends TestCase
             ->assertSee('Konten aman')
             ->assertDontSee('alert("xss")');
     }
+
+    /** ============================= Profil & Struktur ============================= */
+    public function test_profil_page_shows_seeded_profile_content(): void
+    {
+        $this->get(route('profil'))
+            ->assertOk()
+            ->assertSee('Sambutan Kepala Dinas')
+            ->assertSee('Terwujudnya sumber daya manusia yang unggul')
+            ->assertSee('Meningkatkan mutu dan pemerataan layanan pendidikan');
+    }
+
+    public function test_profil_page_shows_custom_kadis_name_from_settings(): void
+    {
+        \App\Support\Settings::set('profile.kadis_name', 'Drs. I Wayan Suparta, M.M.');
+
+        $this->get(route('profil'))
+            ->assertOk()
+            ->assertSee('Drs. I Wayan Suparta, M.M.');
+    }
+
+    public function test_struktur_page_shows_active_officials_tree(): void
+    {
+        $kadis = \App\Models\Official::create([
+            'jabatan' => 'Kepala Dinas',
+            'nama' => 'Drs. I Wayan Suparta, M.M.',
+            'is_active' => true,
+        ]);
+        $sekretariat = \App\Models\Official::create([
+            'jabatan' => 'Sekretariat',
+            'nama' => 'I Gede Sudarma, S.Pd., M.Pd.',
+            'parent_id' => $kadis->id,
+            'is_active' => true,
+        ]);
+        \App\Models\Official::create([
+            'jabatan' => 'Kepala Bidang Pembinaan Pendidikan SD',
+            'nama' => '-',
+            'parent_id' => $sekretariat->id,
+            'is_active' => true,
+        ]);
+
+        $this->get(route('profil.struktur'))
+            ->assertOk()
+            ->assertSee('Kepala Dinas')
+            ->assertSee('Drs. I Wayan Suparta, M.M.')
+            ->assertSee('Sekretariat')
+            ->assertSee('I Gede Sudarma, S.Pd., M.Pd.')
+            ->assertSee('Kepala Bidang Pembinaan Pendidikan SD');
+    }
+
+    public function test_struktur_page_hides_inactive_officials(): void
+    {
+        \App\Models\Official::create([
+            'jabatan' => 'Kepala Dinas Nonaktif',
+            'nama' => 'Bukan Nama Tampil',
+            'is_active' => false,
+        ]);
+
+        $this->get(route('profil.struktur'))
+            ->assertOk()
+            ->assertDontSee('Kepala Dinas Nonaktif')
+            ->assertDontSee('Bukan Nama Tampil');
+    }
 }
