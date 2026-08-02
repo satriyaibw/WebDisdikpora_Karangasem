@@ -20,28 +20,24 @@
                     <p class="mt-2 text-sm font-bold text-brand-700">{{ settings('profile.kadis_name', settings('site.short_name', '')) }}</p>
                 </article>
 
-                <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
-                    <h2 class="text-xl font-bold text-slate-900">Visi</h2>
-                    <blockquote class="mt-4 border-l-4 border-gold-500 bg-gold-50 p-4 text-sm font-semibold italic leading-7 text-slate-800">
-                        "{{ settings('profile.vision', 'Terwujudnya sumber daya manusia yang unggul, berkarakter, berdaya saing, dan berbudaya menuju Karangasem yang aman, sejahtera, dan bahagia.') }}"
-                    </blockquote>
-                </article>
-
-                <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
-                    <h2 class="text-xl font-bold text-slate-900">Misi</h2>
-                    <div class="mt-4 text-sm leading-7 text-slate-700">
-                        {!! Purify::clean(settings('profile.mission', '<ol class="list-decimal space-y-3 pl-5"><li>Meningkatkan mutu dan pemerataan layanan pendidikan anak usia dini, dasar, dan menengah.</li><li>Meningkatkan pembinaan dan pengembangan kepemudaan serta prestasi olahraga.</li><li>Meningkatkan kapasitas dan profesionalisme tenaga pendidik dan kependidikan.</li><li>Mewujudkan tata kelola pemerintahan dinas yang bersih, transparan, dan akuntabel.</li><li>Meningkatkan partisipasi masyarakat dan dunia usaha dalam penyelenggaraan pendidikan.</li></ol>')) !!}
-                    </div>
-                </article>
+                @forelse ($sections as $section)
+                    <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
+                        <h2 class="text-xl font-bold text-slate-900">{{ $section->title }}</h2>
+                        <div class="prose prose-sm mt-4 max-w-none leading-7 text-slate-700">
+                            {!! Purify::clean($section->content) !!}
+                        </div>
+                    </article>
+                @empty
+                    <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
+                        <h2 class="text-xl font-bold text-slate-900">Visi</h2>
+                        <blockquote class="mt-4 border-l-4 border-gold-500 bg-gold-50 p-4 text-sm font-semibold italic leading-7 text-slate-800">
+                            {!! Purify::clean(settings('profile.vision', 'Terwujudnya sumber daya manusia yang unggul, berkarakter, berdaya saing, dan berbudaya menuju Karangasem yang aman, sejahtera, dan bahagia.')) !!}
+                        </blockquote>
+                    </article>
+                @endforelse
             </div>
 
             <aside class="space-y-6">
-                <div class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
-                    <h3 class="text-base font-bold text-slate-900">Tugas & Fungsi</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-600">
-                        {{ settings('profile.duties', 'Melaksanakan urusan pemerintahan daerah di bidang pendidikan, kepemudaan, dan olahraga berdasarkan asas otonomi dan tugas pembantuan.') }}
-                    </p>
-                </div>
                 <div class="rounded-2xl bg-brand-500 p-7 text-white shadow-sm">
                     <h3 class="text-base font-bold">Struktur Organisasi</h3>
                     <p class="mt-3 text-sm leading-6 text-brand-100">

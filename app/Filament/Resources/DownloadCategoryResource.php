@@ -48,12 +48,13 @@ class DownloadCategoryResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->can('unduhan.delete') ?? false;
+        return auth()->user()?->can('unduhan.delete')
+            && ! $record->downloadFiles()->exists();
     }
 
     public static function canDeleteAny(): bool
     {
-        return auth()->user()?->can('unduhan.delete') ?? false;
+        return false;
     }
 
     public static function form(Form $form): Form

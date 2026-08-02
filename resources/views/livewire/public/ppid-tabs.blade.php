@@ -1,4 +1,7 @@
 <div>
+    @if ($categories->isEmpty())
+        <x-empty-state message="Belum ada kategori dokumen PPID. Silakan kunjungi kembali nanti." />
+    @else
     <div class="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Kategori dokumen PPID">
         @foreach ($categories as $category)
             <button
@@ -73,4 +76,5 @@
             </div>
         @endif
     </div>
+    @endif
 </div>

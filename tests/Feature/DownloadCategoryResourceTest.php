@@ -84,7 +84,7 @@ class DownloadCategoryResourceTest extends TestCase
             ->assertHasFormErrors(['slug' => 'regex']);
     }
 
-    public function test_deleting_category_keeps_its_files(): void
+    public function test_deleting_category_with_files_is_blocked(): void
     {
         $admin = $this->getSeededAdmin();
         $this->actingAs($admin);
@@ -92,12 +92,32 @@ class DownloadCategoryResourceTest extends TestCase
         $category = DownloadCategory::where('slug', 'formulir')->firstOrFail();
         $file = DownloadFile::where('category_id', $category->id)->firstOrFail();
 
+        $this->assertFalse(DownloadCategoryResource::canDelete($category));
+
+        Livewire::test(EditDownloadCategory::class, ['record' => $category->getRouteKey()])
+            ->assertActionHidden('delete');
+
+        $this->assertDatabaseHas('download_categories', ['id' => $category->id]);
+        $this->assertDatabaseHas('download_files', ['id' => $file->id, 'category_id' => $category->id]);
+    }
+
+    public function test_deleting_empty_category_is_allowed(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $category = DownloadCategory::create([
+            'name' => 'Kategori Kosong',
+            'slug' => 'kategori-kosong',
+        ]);
+
+        $this->assertTrue(DownloadCategoryResource::canDelete($category));
+
         Livewire::test(EditDownloadCategory::class, ['record' => $category->getRouteKey()])
             ->callAction('delete')
             ->assertSuccessful();
 
         $this->assertDatabaseMissing('download_categories', ['id' => $category->id]);
-        $this->assertDatabaseHas('download_files', ['id' => $file->id, 'category_id' => null]);
     }
 
     public function test_layanan_role_can_manage_download_categories(): void

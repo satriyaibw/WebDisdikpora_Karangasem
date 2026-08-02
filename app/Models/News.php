@@ -86,8 +86,9 @@ class News extends Model
     /**
      * Tambah jumlah dilihat (dipakai frontend Fase 6).
      *
-     * Dibatasi satu kenaikan per berita per 24 jam lewat cache,
-     * agar halaman yang di-refresh berulang / bot tidak menggelembungkan angka.
+     * Dibatasi satu kenaikan per berita per 24 jam lewat cache.
+     * Kenaikan dilakukan di dalam lock agar dua request konkuren
+     * tidak menggandakan hitungan (has + increment bukan operasi atomik).
      */
     public function recordView(): void
     {
@@ -97,8 +98,22 @@ class News extends Model
             return;
         }
 
-        $this->increment('views_count');
-        Cache::put($cacheKey, true, now()->addDay());
+        $lock = Cache::lock('news-view-lock-'.$this->getKey(), 10);
+
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            if (Cache::has($cacheKey)) {
+                return;
+            }
+
+            $this->increment('views_count');
+            Cache::put($cacheKey, true, now()->addDay());
+        } finally {
+            $lock->release();
+        }
     }
 
     /**

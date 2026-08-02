@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Katalog Layanan Publik per Bidang (MasterPlan 5.1).
@@ -96,5 +97,25 @@ class Service extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    /**
+     * Apakah template formulir benar-benar ada di disk `public`
+     * (menghindari tautan rusak bila berkas dihapus tanpa update baris).
+     */
+    public function getHasFormTemplateAttribute(): bool
+    {
+        return $this->form_template !== null
+            && Storage::disk('public')->exists($this->form_template);
+    }
+
+    /**
+     * URL publik template formulir, null bila berkas tidak tersedia.
+     */
+    public function getFormTemplateUrlAttribute(): ?string
+    {
+        return $this->has_form_template
+            ? Storage::disk('public')->url($this->form_template)
+            : null;
     }
 }

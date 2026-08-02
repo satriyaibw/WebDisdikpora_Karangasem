@@ -51,9 +51,6 @@ class SettingsPageTest extends TestCase
                 'profile.kadis_name' => 'Drs. I Wayan Suparta, M.M.',
                 'profile.sekretariat_name' => 'I Gede Sudarma, S.Pd., M.Pd.',
                 'profile.welcome' => '<p>Sambutan baru.</p>',
-                'profile.vision' => '<p>Visi baru.</p>',
-                'profile.mission' => '<ol><li>Misi baru.</li></ol>',
-                'profile.duties' => '<p>Tupoksi baru.</p>',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
@@ -84,6 +81,18 @@ class SettingsPageTest extends TestCase
         $this->actingAs($user);
 
         $this->get('/admin/pengaturan')->assertForbidden();
+    }
+
+    public function test_save_button_hidden_for_read_only_user(): void
+    {
+        $readOnly = User::factory()->create();
+        $readOnly->givePermissionTo(['panel.access', 'setting.read']);
+        $this->actingAs($readOnly);
+
+        $this->get('/admin/pengaturan')->assertOk();
+
+        Livewire::test(Pengaturan::class)
+            ->assertDontSee('Simpan Pengaturan');
     }
 
     private function getSeededAdmin(): User
