@@ -44,6 +44,8 @@
                     </article>
                 @endforeach
             </div>
+
+            <div class="mt-8">{{ $upcoming->links() }}</div>
         @endif
 
         @if ($finished->isNotEmpty())

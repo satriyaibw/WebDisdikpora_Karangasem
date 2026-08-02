@@ -116,4 +116,14 @@ class News extends Model
                 ->whereNull('published_at')
                 ->orWhere('published_at', '<=', now()));
     }
+
+    /**
+     * Apakah berita ini boleh tampil di portal publik
+     * (sama dengan scopePublished, untuk guard halaman detail).
+     */
+    public function isPublishedForPublic(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED
+            && ($this->published_at === null || $this->published_at->lte(now()));
+    }
 }

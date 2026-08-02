@@ -33,7 +33,7 @@
         @endif
 
         <div class="prose prose-slate mt-8 max-w-none text-justify">
-            {!! $news->content !!}
+            {!! Purify::clean($news->content) !!}
         </div>
 
         <nav class="mt-10 border-t border-slate-200 pt-6">

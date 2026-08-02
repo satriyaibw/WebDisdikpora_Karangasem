@@ -13,7 +13,7 @@
                 <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-lg font-bold text-slate-900">Deskripsi Layanan</h2>
                     <div class="prose prose-sm mt-4 max-w-none text-slate-700">
-                        {!! $service->description !!}
+                        {!! Purify::clean($service->description) !!}
                     </div>
                 </article>
 
@@ -21,7 +21,7 @@
                     <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                         <h2 class="text-lg font-bold text-slate-900">Persyaratan</h2>
                         <div class="prose prose-sm mt-4 max-w-none text-slate-700">
-                            {!! $service->requirements !!}
+                            {!! Purify::clean($service->requirements) !!}
                         </div>
                     </article>
                 @endif
@@ -30,7 +30,7 @@
                     <article class="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
                         <h2 class="text-lg font-bold text-slate-900">Bagan Alur Prosedur</h2>
                         <div class="prose prose-sm mt-4 max-w-none text-slate-700">
-                            {!! $service->procedure !!}
+                            {!! Purify::clean($service->procedure) !!}
                         </div>
                     </article>
                 @endif
@@ -53,7 +53,7 @@
                         <div class="flex items-start justify-between gap-4 px-6 py-4">
                             <dt class="text-slate-500">Biaya</dt>
                             <dd class="text-right font-semibold text-slate-900">
-                                {{ $service->cost && ! str_contains($service->cost, '0') ? $service->cost : 'Gratis' }}
+                                {{ preg_match('/[1-9]/', (string) $service->cost) ? $service->cost : 'Gratis' }}
                             </dd>
                         </div>
                         @if ($service->pic_name)

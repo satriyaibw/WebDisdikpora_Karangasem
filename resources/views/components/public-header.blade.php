@@ -66,7 +66,7 @@
                                 type="button"
                                 class="flex items-center gap-1 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-600"
                                 x-on:click="profilOpen = !profilOpen"
-                                aria-expanded="profilOpen"
+                                x-bind:aria-expanded="profilOpen ? 'true' : 'false'"
                             >
                                 Profil
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -78,6 +78,7 @@
                                 x-show="profilOpen"
                                 x-on:click.away="profilOpen = false"
                                 x-transition
+                                x-cloak
                             >
                                 <a href="{{ route('profil') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-brand-50 hover:text-brand-700">Profil Instansi</a>
                                 <a href="{{ route('profil.struktur') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-brand-50 hover:text-brand-700">Struktur Organisasi</a>
@@ -100,7 +101,7 @@
                     class="inline-flex items-center gap-2 px-3 py-3 text-sm font-semibold text-white md:hidden"
                     x-on:click="open = !open"
                     aria-label="Buka menu navigasi"
-                    aria-expanded="open"
+                    x-bind:aria-expanded="open ? 'true' : 'false'"
                 >
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -110,7 +111,7 @@
             </div>
         </div>
 
-        <div class="border-t border-white/20 md:hidden" x-show="open" x-transition>
+        <div class="border-t border-white/20 md:hidden" x-show="open" x-transition x-cloak>
             <ul class="space-y-0.5 px-4 py-2">
                 <li><a href="{{ route('home') }}" class="block rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-brand-600">Beranda</a></li>
                 <li><a href="{{ route('profil') }}" class="block rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-brand-600">Profil Instansi</a></li>

@@ -38,8 +38,8 @@ class ServiceCatalog extends Component
         $services = Service::published()
             ->with('bidang')
             ->when($this->search, fn ($query) => $query->where(fn ($q) => $q
-                ->where('name', 'like', "%{$this->search}%")
-                ->orWhere('short_description', 'like', "%{$this->search}%")))
+                ->where('name', 'like', '%'.escapeLike($this->search).'%')
+                ->orWhere('short_description', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('name')
             ->paginate(9);

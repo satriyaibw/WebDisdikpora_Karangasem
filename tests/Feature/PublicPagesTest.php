@@ -309,4 +309,114 @@ class PublicPagesTest extends TestCase
         $this->assertSame('Disdikpora Karangasem', settings('site.short_name'));
         $this->assertSame('fallback', settings('key.tidak.ada', 'fallback'));
     }
+
+    public function test_settings_flush_invalidates_cached_values(): void
+    {
+        settings('site.short_name');
+
+        \Illuminate\Support\Facades\DB::table('settings')
+            ->where('key', 'site.short_name')
+            ->update(['value' => 'Nama Baru']);
+
+        $this->assertSame('Disdikpora Karangasem', settings('site.short_name'));
+
+        \App\Support\Settings::flush();
+
+        $this->assertSame('Nama Baru', settings('site.short_name'));
+    }
+
+    public function test_escape_like_escapes_wildcards(): void
+    {
+        $this->assertSame('100\\%\\_x\\\\y', escapeLike('100%_x\\y'));
+    }
+
+    /** ============================= Regresi bug Fase 6 ============================= */
+    public function test_galeri_show_subtitle_includes_photo_count(): void
+    {
+        $album = Album::create(['title' => 'Album Dengan Foto']);
+        AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/foto-1.jpg']);
+        AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/foto-2.jpg']);
+
+        $this->get(route('galeri.show', $album))
+            ->assertOk()
+            ->assertSee('Album foto — 2 foto');
+    }
+
+    public function test_galeri_index_shows_cover_photo_of_album(): void
+    {
+        $album = Album::create(['title' => 'Album Sampul']);
+        AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/sampul.jpg', 'sort_order' => 2]);
+        AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/utama.jpg', 'sort_order' => 1]);
+
+        $this->get(route('galeri.index'))
+            ->assertOk()
+            ->assertSee('Album Sampul')
+            ->assertSee('galeri/utama.jpg');
+    }
+
+    public function test_ppid_tab_badge_counts_only_published_documents(): void
+    {
+        $category = \App\Models\PpidCategory::create([
+            'name' => 'Kategori Uji Badge',
+            'slug' => 'kategori-uji-badge',
+        ]);
+        \App\Models\PpidDocument::create([
+            'title' => 'Dokumen Terbit Uji',
+            'file_path' => 'ppid/dokumen-terbit.pdf',
+            'status' => \App\Models\PpidDocument::STATUS_PUBLISHED,
+            'category_id' => $category->id,
+        ]);
+        \App\Models\PpidDocument::create([
+            'title' => 'Dokumen Draft Uji',
+            'file_path' => 'ppid/dokumen-draft.pdf',
+            'status' => \App\Models\PpidDocument::STATUS_DRAFT,
+            'category_id' => $category->id,
+        ]);
+
+        \Livewire\Livewire::test(\App\Livewire\Public\PpidTabs::class)
+            ->set('activeCategorySlug', 'kategori-uji-badge')
+            ->assertSee('Dokumen Terbit Uji')
+            ->assertDontSee('Dokumen Draft Uji');
+    }
+
+    public function test_published_news_with_future_published_at_is_not_accessible(): void
+    {
+        $this->makeNews([
+            'title' => 'Berita Masa Depan',
+            'slug' => 'berita-masa-depan',
+            'published_at' => now()->addDay(),
+        ]);
+
+        $this->get(route('berita.index'))->assertDontSee('Berita Masa Depan');
+        $this->get(route('berita.show', 'berita-masa-depan'))->assertNotFound();
+    }
+
+    public function test_service_with_paid_cost_shows_cost_instead_of_gratis(): void
+    {
+        Service::create([
+            'name' => 'Layanan Berbayar Uji',
+            'slug' => 'layanan-berbayar-uji',
+            'cost' => 'Rp 50.000',
+            'status' => Service::STATUS_PUBLISHED,
+        ]);
+
+        $this->get(route('layanan.show', 'layanan-berbayar-uji'))
+            ->assertOk()
+            ->assertSee('Rp 50.000')
+            ->assertDontSee('Gratis');
+    }
+
+    public function test_news_content_is_sanitized_of_scripts(): void
+    {
+        $this->makeNews([
+            'title' => 'Berita Sanitasi Uji',
+            'slug' => 'berita-sanitasi-uji',
+            'content' => '<p>Konten aman</p><script>alert("xss")</script>',
+        ]);
+
+        $this->get(route('berita.show', 'berita-sanitasi-uji'))
+            ->assertOk()
+            ->assertSee('Konten aman')
+            ->assertDontSee('alert("xss")');
+    }
 }

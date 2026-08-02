@@ -7,14 +7,6 @@
 @section('content')
     <x-page-hero title="Pusat Unduhan" subtitle="Formulir, petunjuk teknis, dan berkas lainnya" />
 
-    @php
-        $typeLabels = [
-            \App\Models\DownloadFile::TYPE_FORMULIR => 'Formulir',
-            \App\Models\DownloadFile::TYPE_JUKNIS => 'Petunjuk Teknis',
-            \App\Models\DownloadFile::TYPE_LAINNYA => 'Lainnya',
-        ];
-    @endphp
-
     <section class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         @if ($groups->isEmpty())
             <x-empty-state message="Belum ada berkas unduhan." />

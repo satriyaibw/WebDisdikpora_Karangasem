@@ -12,7 +12,7 @@ class AgendaController extends Controller
         $upcoming = Agenda::whereDate('date', '>=', today())
             ->orderBy('date')
             ->orderBy('start_time')
-            ->get();
+            ->paginate(15);
 
         $finished = Agenda::whereDate('date', '<', today())
             ->orderByDesc('date')

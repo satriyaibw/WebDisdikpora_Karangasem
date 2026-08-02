@@ -27,7 +27,7 @@
                         </div>
                         <h2 class="mt-3 text-lg font-bold text-slate-900">{{ $announcement->title }}</h2>
                         <div class="prose prose-sm mt-2 max-w-none text-slate-600">
-                            {!! $announcement->content !!}
+                            {!! Purify::clean($announcement->content) !!}
                         </div>
                         @if ($announcement->attachment_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($announcement->attachment_path))
                             <a

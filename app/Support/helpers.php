@@ -11,3 +11,14 @@ if (! function_exists('settings')) {
         return Settings::get($key, $default);
     }
 }
+
+if (! function_exists('escapeLike')) {
+    /**
+     * Escape karakter wildcard SQL LIKE (`%`, `_`, `\`) dari input pencarian
+     * agar diperlakukan sebagai teks literal, bukan wildcard.
+     */
+    function escapeLike(?string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], (string) $value);
+    }
+}

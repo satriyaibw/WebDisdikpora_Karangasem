@@ -38,8 +38,8 @@ class SopCatalog extends Component
         $sops = SopDocument::published()
             ->with('bidang')
             ->when($this->search, fn ($query) => $query->where(fn ($q) => $q
-                ->where('title', 'like', "%{$this->search}%")
-                ->orWhere('sop_number', 'like', "%{$this->search}%")))
+                ->where('title', 'like', '%'.escapeLike($this->search).'%')
+                ->orWhere('sop_number', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('title')
             ->paginate(10);

@@ -31,15 +31,17 @@ class PpidTabs extends Component
 
     public function render()
     {
-        $categories = PpidCategory::withCount('documents')->orderBy('id')->get();
+        $categories = PpidCategory::withCount([
+            'documents' => fn ($query) => $query->published(),
+        ])->orderBy('id')->get();
 
         $documents = PpidCategory::query()
             ->where('slug', $this->activeCategorySlug)
             ->with(['documents' => fn ($query) => $query
                 ->published()
                 ->when($this->search, fn ($q) => $q->where(fn ($inner) => $inner
-                    ->where('title', 'like', "%{$this->search}%")
-                    ->orWhere('doc_number', 'like', "%{$this->search}%")))
+                    ->where('title', 'like', '%'.escapeLike($this->search).'%')
+                    ->orWhere('doc_number', 'like', '%'.escapeLike($this->search).'%')))
                 ->orderByDesc('year')
                 ->orderBy('title')])
             ->first();

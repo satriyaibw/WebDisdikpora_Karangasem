@@ -5,17 +5,18 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\News;
+use Illuminate\Http\Request;
 
 class NewsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $categories = Category::withCount(['news' => fn ($query) => $query->published()])
             ->orderBy('name')
             ->get();
 
-        $activeCategory = request()->query('category');
-        $search = request()->query('q');
+        $activeCategory = $request->query('category');
+        $search = $request->query('q');
 
         $news = News::published()
             ->with(['category', 'author'])
@@ -24,8 +25,8 @@ class NewsController extends Controller
                 fn ($q) => $q->where('slug', $activeCategory)
             ))
             ->when($search, fn ($query) => $query->where(fn ($q) => $q
-                ->where('title', 'like', "%{$search}%")
-                ->orWhere('excerpt', 'like', "%{$search}%")))
+                ->where('title', 'like', '%'.escapeLike($search).'%')
+                ->orWhere('excerpt', 'like', '%'.escapeLike($search).'%')))
             ->orderByRaw('published_at IS NULL, published_at DESC')
             ->paginate(9)
             ->withQueryString();
@@ -35,7 +36,7 @@ class NewsController extends Controller
 
     public function show(News $news)
     {
-        abort_unless($news->status === News::STATUS_PUBLISHED, 404);
+        abort_unless($news->isPublishedForPublic(), 404);
 
         $news->load(['category', 'author']);
         $news->recordView();
@@ -43,7 +44,7 @@ class NewsController extends Controller
         $related = News::published()
             ->whereKeyNot($news->getKey())
             ->when($news->category_id, fn ($query) => $query->where('category_id', $news->category_id))
-            ->latest()
+            ->orderByRaw('published_at IS NULL, published_at DESC')
             ->limit(3)
             ->get();
 

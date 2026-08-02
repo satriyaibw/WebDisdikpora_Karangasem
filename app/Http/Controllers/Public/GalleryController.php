@@ -12,6 +12,7 @@ class GalleryController extends Controller
     public function index()
     {
         $albums = Album::withCount('photos')
+            ->with('coverPhoto')
             ->latest()
             ->paginate(9);
 
@@ -31,6 +32,7 @@ class GalleryController extends Controller
 
     public function show(Album $album)
     {
+        $album->loadCount('photos');
         $album->load(['photos' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')]);
 
         return view('pages.galeri-show', compact('album'));
