@@ -14,12 +14,20 @@
             <div class="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>figure]:mb-4">
                 @foreach ($album->photos as $photo)
                     <figure class="group break-inside-avoid overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                        <img
-                            src="{{ Storage::url($photo->photo_path) }}"
-                            alt="{{ $photo->caption ?? $album->title . ' - foto ' . $loop->iteration }}"
-                            loading="lazy"
-                            class="w-full object-cover transition duration-300 group-hover:scale-105"
-                        >
+                        @if ($photoUrl = public_url_if_exists($photo->photo_path))
+                            <img
+                                src="{{ $photoUrl }}"
+                                alt="{{ $photo->caption ?? $album->title . ' - foto ' . $loop->iteration }}"
+                                loading="lazy"
+                                class="w-full object-cover transition duration-300 group-hover:scale-105"
+                            >
+                        @else
+                            <div class="flex aspect-video w-full items-center justify-center bg-slate-100">
+                                <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                </svg>
+                            </div>
+                        @endif
                         @if ($photo->caption)
                             <figcaption class="px-4 py-3 text-sm text-slate-600">{{ $photo->caption }}</figcaption>
                         @endif

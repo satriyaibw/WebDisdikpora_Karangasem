@@ -8,17 +8,20 @@
         <section class="relative" x-data="{ current: 0 }" aria-label="Sorotan utama" x-cloak>
             <div class="relative h-[420px] w-full overflow-hidden sm:h-[480px]">
                 @foreach ($sliders as $index => $slider)
+                    @php($sliderUrl = public_url_if_exists($slider->image))
                     <div
                         class="absolute inset-0 transition-opacity duration-500 {{ $index === 0 ? '' : 'opacity-0' }}"
                         :class="current === {{ $index }} ? 'opacity-100' : 'opacity-0'"
                         x-cloak
                     >
-                        <img
-                            src="{{ Storage::url($slider->image) }}"
-                            alt="{{ $slider->title ?? 'Slide ' . ($index + 1) }}"
-                            @if ($index > 0) loading="lazy" @endif
-                            class="h-full w-full object-cover"
-                        >
+                        @if ($sliderUrl)
+                            <img
+                                src="{{ $sliderUrl }}"
+                                alt="{{ $slider->title ?? 'Slide ' . ($index + 1) }}"
+                                @if ($index > 0) loading="lazy" @endif
+                                class="h-full w-full object-cover"
+                            >
+                        @endif
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/30 to-transparent"></div>
                         <div class="absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
                             @if ($slider->title)
@@ -159,8 +162,11 @@
                 <x-section-heading title="Infografis" subtitle="Data dan informasi dalam format visual" :link="route('galeri.index')" />
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($infographics as $infographic)
+                        @php($infographicUrl = public_url_if_exists($infographic->image))
                         <a href="{{ $infographic->link ?: route('galeri.index') }}" target="{{ $infographic->link ? '_blank' : '_self' }}" rel="noopener noreferrer" class="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                            <img src="{{ Storage::url($infographic->image) }}" alt="{{ $infographic->title }}" loading="lazy" class="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105">
+                            @if ($infographicUrl)
+                                <img src="{{ $infographicUrl }}" alt="{{ $infographic->title }}" loading="lazy" class="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105">
+                            @endif
                             <p class="px-4 py-3 text-sm font-semibold text-slate-800 group-hover:text-brand-600">{{ $infographic->title }}</p>
                         </a>
                     @endforeach

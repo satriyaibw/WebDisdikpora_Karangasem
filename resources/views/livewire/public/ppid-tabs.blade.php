@@ -4,7 +4,7 @@
             <button
                 type="button"
                 role="tab"
-                wire:click="setCategory('{{ $category->slug }}')"
+                wire:click="setCategory({{ json_encode($category->slug) }})"
                 aria-selected="{{ $activeCategorySlug === $category->slug ? 'true' : 'false' }}"
                 class="rounded-t-lg px-5 py-2.5 text-sm font-semibold transition {{ $activeCategorySlug === $category->slug ? 'bg-white text-brand-700 shadow ring-1 ring-slate-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300' }}"
             >
@@ -50,17 +50,21 @@
                                 <td class="px-4 py-3 text-slate-600">{{ $document->year ?? '-' }}</td>
                                 <td class="px-4 py-3 text-slate-600">{{ \App\Models\PpidDocument::formatFileSize($document->file_size) }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    <a
-                                        href="{{ \Illuminate\Support\Facades\Storage::url($document->file_path) }}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600"
-                                    >
-                                        Buka PDF
-                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                        </svg>
-                                    </a>
+                                    @if ($fileUrl = public_url_if_exists($document->file_path))
+                                        <a
+                                            href="{{ $fileUrl }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600"
+                                        >
+                                            Buka PDF
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                            </svg>
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-slate-400">Tidak tersedia</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

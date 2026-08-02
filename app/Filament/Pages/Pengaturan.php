@@ -13,6 +13,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Arr;
 
 class Pengaturan extends Page implements HasForms
 {
@@ -148,7 +149,9 @@ class Pengaturan extends Page implements HasForms
      */
     public function save(): void
     {
-        $data = \Illuminate\Support\Arr::dot($this->form->getState());
+        abort_unless(auth()->user()?->can('setting.update'), 403);
+
+        $data = Arr::dot($this->form->getState());
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(

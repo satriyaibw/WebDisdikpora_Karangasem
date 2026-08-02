@@ -119,6 +119,35 @@ class OfficialResourceTest extends TestCase
         $this->assertTrue(OfficialResource::canDelete(Official::first()));
     }
 
+    public function test_parent_cannot_be_self_or_descendant(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $kadis = Official::where('jabatan', 'Kepala Dinas')->firstOrFail();
+        $sekretariat = Official::where('jabatan', 'Sekretariat')->firstOrFail();
+
+        Livewire::test(EditOfficial::class, ['record' => $kadis->getRouteKey()])
+            ->fillForm([
+                'jabatan' => 'Kepala Dinas',
+                'nama' => '-',
+                'parent_id' => $kadis->id,
+            ])
+            ->call('save')
+            ->assertHasFormErrors(['parent_id']);
+
+        Livewire::test(EditOfficial::class, ['record' => $kadis->getRouteKey()])
+            ->fillForm([
+                'jabatan' => 'Kepala Dinas',
+                'nama' => '-',
+                'parent_id' => $sekretariat->id,
+            ])
+            ->call('save')
+            ->assertHasFormErrors(['parent_id']);
+
+        $this->assertNull($kadis->fresh()->parent_id);
+    }
+
     public function test_non_privileged_role_cannot_manage_officials(): void
     {
         $user = User::factory()->create();

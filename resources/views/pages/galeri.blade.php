@@ -17,9 +17,9 @@
                 @foreach ($albums as $album)
                     <a href="{{ route('galeri.show', $album) }}" class="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md">
                         <div class="relative">
-                            @if ($album->coverPhoto)
+                            @if ($coverUrl = public_url_if_exists($album->coverPhoto?->photo_path))
                                 <img
-                                    src="{{ Storage::url($album->coverPhoto->photo_path) }}"
+                                    src="{{ $coverUrl }}"
                                     alt="{{ $album->title }}"
                                     loading="lazy"
                                     class="h-48 w-full object-cover transition duration-300 group-hover:scale-105"

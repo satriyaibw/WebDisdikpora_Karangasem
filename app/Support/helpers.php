@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\Settings;
+use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('settings')) {
     /**
@@ -9,6 +10,24 @@ if (! function_exists('settings')) {
     function settings(string $key, ?string $default = null): ?string
     {
         return Settings::get($key, $default);
+    }
+}
+
+if (! function_exists('public_url_if_exists')) {
+    /**
+     * URL publik berkas bila berkas benar-benar ada di disk `public`,
+     * selain itu null — menghindari link/gambar rusak saat berkas
+     * dihapus dari disk tanpa memperbarui baris database.
+     */
+    function public_url_if_exists(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        return Storage::disk('public')->exists($path)
+            ? Storage::disk('public')->url($path)
+            : null;
     }
 }
 

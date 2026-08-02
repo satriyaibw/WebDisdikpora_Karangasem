@@ -24,11 +24,6 @@ class PpidTabs extends Component
         $this->search = '';
     }
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
     public function render()
     {
         $categories = PpidCategory::withCount([

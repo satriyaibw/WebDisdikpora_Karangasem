@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OfficialResource\Pages;
 use App\Models\Official;
+use App\Rules\OfficialParentRule;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -83,6 +84,7 @@ class OfficialResource extends Resource
                             ->nullable()
                             ->searchable()
                             ->preload()
+                            ->rules([new OfficialParentRule($form->getRecord()?->id)])
                             ->placeholder('— Tanpa Atasan (Puncak) —'),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Tampil di bagan publik')

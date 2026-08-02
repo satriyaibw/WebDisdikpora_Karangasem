@@ -1,10 +1,12 @@
 @props(['news' => null])
 
+@php($coverUrl = public_url_if_exists($news->cover_image))
+
 <article class="group flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md">
     <a href="{{ route('berita.show', $news->slug) }}" class="block">
-        @if ($news->cover_image)
+        @if ($coverUrl)
             <img
-                src="{{ Storage::url($news->cover_image) }}"
+                src="{{ $coverUrl }}"
                 alt="{{ $news->title }}"
                 loading="lazy"
                 class="h-44 w-full object-cover transition duration-300 group-hover:scale-105"

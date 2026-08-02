@@ -18,6 +18,7 @@ class ProfileController extends Controller
             ->with([
                 'children' => fn ($query) => $query->active(),
                 'children.children' => fn ($query) => $query->active(),
+                'children.children.children' => fn ($query) => $query->active(),
             ])
             ->whereNull('parent_id')
             ->orderBy('sort_order')

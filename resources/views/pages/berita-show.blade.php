@@ -26,9 +26,9 @@
             <h1 class="mt-4 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">{{ $news->title }}</h1>
         </header>
 
-        @if ($news->cover_image)
+        @if ($coverUrl = public_url_if_exists($news->cover_image))
             <figure class="mt-8 overflow-hidden rounded-2xl shadow-sm ring-1 ring-slate-200">
-                <img src="{{ Storage::url($news->cover_image) }}" alt="{{ $news->title }}" class="max-h-[480px] w-full object-cover">
+                <img src="{{ $coverUrl }}" alt="{{ $news->title }}" class="max-h-[480px] w-full object-cover">
             </figure>
         @endif
 

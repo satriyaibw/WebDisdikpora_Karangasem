@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Berita & artikel (MasterPlan 3.1).
@@ -84,10 +85,20 @@ class News extends Model
 
     /**
      * Tambah jumlah dilihat (dipakai frontend Fase 6).
+     *
+     * Dibatasi satu kenaikan per berita per 24 jam lewat cache,
+     * agar halaman yang di-refresh berulang / bot tidak menggelembungkan angka.
      */
     public function recordView(): void
     {
+        $cacheKey = 'news-viewed-'.$this->getKey();
+
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
         $this->increment('views_count');
+        Cache::put($cacheKey, true, now()->addDay());
     }
 
     /**
