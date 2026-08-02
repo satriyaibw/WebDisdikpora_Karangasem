@@ -4,6 +4,14 @@
 
 @section('metaDescription', Str::limit(strip_tags((string) $album->description), 160))
 
+@section('og:type', 'article')
+@section('ogTitle', $album->title)
+@if ($firstPhoto = $album->photos->first())
+    @if ($photoUrl = public_url_if_exists($firstPhoto->photo_path))
+        @section('ogImage', url($photoUrl))
+    @endif
+@endif
+
 @section('content')
     <x-page-hero :title="$album->title" :subtitle="'Album foto — ' . $album->photos_count . ' foto'" />
 

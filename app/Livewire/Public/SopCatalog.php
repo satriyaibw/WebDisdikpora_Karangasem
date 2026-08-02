@@ -4,6 +4,7 @@ namespace App\Livewire\Public;
 
 use App\Models\Bidang;
 use App\Models\SopDocument;
+use App\Support\PublicCache;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -33,16 +34,22 @@ class SopCatalog extends Component
 
     public function render()
     {
-        $bidangs = Bidang::orderBy('name')->get();
+        $bidangs = PublicCache::remember(PublicCache::SOPS_BIDANGS, fn () => Bidang::orderBy('name')->get(), [PublicCache::TAG_SOPS]);
 
-        $sops = SopDocument::published()
+        $catalogKey = PublicCache::keyFor('sops.catalog', [
+            'page' => $this->getPage(),
+            'bidang' => (string) $this->bidangId,
+            'search' => $this->search,
+        ]);
+
+        $sops = PublicCache::remember($catalogKey, fn () => SopDocument::published()
             ->with('bidang')
             ->when($this->search, fn ($query) => $query->where(fn ($q) => $q
                 ->where('title', 'like', '%'.escapeLike($this->search).'%')
                 ->orWhere('sop_number', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('title')
-            ->paginate(10);
+            ->paginate(10), [PublicCache::TAG_SOPS]);
 
         return view('livewire.public.sop-catalog', compact('bidangs', 'sops'));
     }
