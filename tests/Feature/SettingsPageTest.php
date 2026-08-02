@@ -67,6 +67,16 @@ class SettingsPageTest extends TestCase
         $this->assertSame('general', Setting::where('key', 'site.tagline')->firstOrFail()->group);
     }
 
+    public function test_save_button_is_associated_with_the_form(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(Pengaturan::class)
+            ->assertSee('Simpan Pengaturan')
+            ->assertSeeHtml('form="form"');
+    }
+
     public function test_pengaturan_page_not_accessible_without_permission(): void
     {
         $user = User::factory()->create();

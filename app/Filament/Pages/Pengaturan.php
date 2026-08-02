@@ -171,7 +171,8 @@ class Pengaturan extends Page implements HasForms
             Actions\Action::make('save')
                 ->label('Simpan Pengaturan')
                 ->icon('heroicon-o-check')
-                ->submit('form'),
+                ->submit('form')
+                ->formId('form'),
         ];
     }
 
