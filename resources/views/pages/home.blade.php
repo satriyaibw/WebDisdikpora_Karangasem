@@ -18,7 +18,7 @@
                             <img
                                 src="{{ $sliderUrl }}"
                                 alt="{{ $slider->title ?? 'Slide ' . ($index + 1) }}"
-                                @if ($index > 0) loading="lazy" @endif
+                                @if ($index > 0) loading="lazy" @else fetchpriority="high" @endif
                                 class="h-full w-full object-cover"
                             >
                         @endif

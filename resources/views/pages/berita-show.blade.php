@@ -4,6 +4,15 @@
 
 @section('metaDescription', Str::limit(strip_tags((string) $news->excerpt), 160))
 
+@push('meta')
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="{{ $news->title }}">
+    <meta property="og:description" content="{{ Str::limit(strip_tags((string) $news->excerpt), 160) }}">
+    @if ($coverUrl = public_url_if_exists($news->cover_image))
+        <meta property="og:image" content="{{ url($coverUrl) }}">
+    @endif
+@endpush
+
 @section('content')
     <article class="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <header>
@@ -28,7 +37,7 @@
 
         @if ($coverUrl = public_url_if_exists($news->cover_image))
             <figure class="mt-8 overflow-hidden rounded-2xl shadow-sm ring-1 ring-slate-200">
-                <img src="{{ $coverUrl }}" alt="{{ $news->title }}" class="max-h-[480px] w-full object-cover">
+                <img src="{{ $coverUrl }}" alt="{{ $news->title }}" loading="lazy" class="max-h-[480px] w-full object-cover">
             </figure>
         @endif
 

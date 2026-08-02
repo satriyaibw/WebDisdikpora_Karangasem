@@ -4,6 +4,7 @@ namespace App\Livewire\Public;
 
 use App\Models\Bidang;
 use App\Models\Service;
+use App\Support\PublicCache;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -33,16 +34,22 @@ class ServiceCatalog extends Component
 
     public function render()
     {
-        $bidangs = Bidang::orderBy('name')->get();
+        $bidangs = PublicCache::remember(PublicCache::SERVICES_BIDANGS, fn () => Bidang::orderBy('name')->get());
 
-        $services = Service::published()
+        $catalogKey = PublicCache::keyFor('services.catalog', [
+            'page' => $this->getPage(),
+            'bidang' => (string) $this->bidangId,
+            'search' => $this->search,
+        ]);
+
+        $services = PublicCache::remember($catalogKey, fn () => Service::published()
             ->with('bidang')
             ->when($this->search, fn ($query) => $query->where(fn ($q) => $q
                 ->where('name', 'like', '%'.escapeLike($this->search).'%')
                 ->orWhere('short_description', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('name')
-            ->paginate(9);
+            ->paginate(9));
 
         return view('livewire.public.service-catalog', compact('bidangs', 'services'));
     }

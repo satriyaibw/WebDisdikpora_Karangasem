@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProfileSection;
+use App\Support\PublicCache;
 
 class ProfileController extends Controller
 {
     public function index()
     {
-        $sections = ProfileSection::active()
+        $sections = PublicCache::remember(PublicCache::PROFILE_SECTIONS, fn () => ProfileSection::active()
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get();
+            ->get());
 
         return view('pages.profil', compact('sections'));
     }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Public;
 
 use App\Models\PpidCategory;
+use App\Support\PublicCache;
 use Livewire\Component;
 
 class PpidTabs extends Component
@@ -13,9 +14,9 @@ class PpidTabs extends Component
 
     public function mount(): void
     {
-        $this->activeCategorySlug ??= PpidCategory::query()
+        $this->activeCategorySlug ??= PublicCache::remember('ppid.first_category_slug', fn () => PpidCategory::query()
             ->orderBy('id')
-            ->value('slug');
+            ->value('slug'));
     }
 
     public function setCategory(string $slug): void
@@ -26,11 +27,16 @@ class PpidTabs extends Component
 
     public function render()
     {
-        $categories = PpidCategory::withCount([
+        $categories = PublicCache::remember(PublicCache::PPID_CATEGORIES, fn () => PpidCategory::withCount([
             'documents' => fn ($query) => $query->published(),
-        ])->orderBy('id')->get();
+        ])->orderBy('id')->get());
 
-        $documents = PpidCategory::query()
+        $documentsKey = PublicCache::keyFor('ppid.documents', [
+            'category' => $this->activeCategorySlug,
+            'search' => $this->search,
+        ]);
+
+        $documents = PublicCache::remember($documentsKey, fn () => PpidCategory::query()
             ->where('slug', $this->activeCategorySlug)
             ->with(['documents' => fn ($query) => $query
                 ->published()
@@ -39,7 +45,7 @@ class PpidTabs extends Component
                     ->orWhere('doc_number', 'like', '%'.escapeLike($this->search).'%')))
                 ->orderByDesc('year')
                 ->orderBy('title')])
-            ->first();
+            ->first());
 
         return view('livewire.public.ppid-tabs', compact('categories', 'documents'));
     }
