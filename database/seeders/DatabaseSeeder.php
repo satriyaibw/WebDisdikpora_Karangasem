@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $this->call(BidangSeeder::class);
         $this->call(ServiceSeeder::class);
         $this->call(SopSeeder::class);
+        $this->call(DownloadCategorySeeder::class);
         $this->call(DownloadFileSeeder::class);
         $this->call(OfficialSeeder::class);
     }

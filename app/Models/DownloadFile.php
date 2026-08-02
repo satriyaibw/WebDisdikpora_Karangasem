@@ -8,12 +8,13 @@ use App\Models\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Pusat Unduhan Berkas (MasterPlan 5.3).
  *
  * Formulir resmi & Petunjuk Teknis (Juknis) yang sering dibutuhkan
- * sekolah/masyarakat, dikelompokkan berdasarkan jenis berkas.
+ * sekolah/masyarakat, dikelompokkan berdasarkan kategori dinamis.
  */
 class DownloadFile extends Model
 {
@@ -25,12 +26,6 @@ class DownloadFile extends Model
      * @var array<int, string>
      */
     protected array $fileAttributes = ['file_path'];
-
-    public const TYPE_FORMULIR = 'formulir';
-
-    public const TYPE_JUKNIS = 'juknis';
-
-    public const TYPE_LAINNYA = 'lainnya';
 
     public const STATUS_DRAFT = 'draft';
 
@@ -47,7 +42,7 @@ class DownloadFile extends Model
         'title',
         'slug',
         'description',
-        'type',
+        'category_id',
         'file_path',
         'file_size',
         'status',
@@ -61,22 +56,17 @@ class DownloadFile extends Model
     protected function casts(): array
     {
         return [
+            'category_id' => 'integer',
             'file_size' => 'integer',
         ];
     }
 
     /**
-     * Opsi jenis berkas untuk form & filter panel admin.
-     *
-     * @return array<string, string>
+     * Kategori berkas unduhan dari berkas ini.
      */
-    public static function typeOptions(): array
+    public function category(): BelongsTo
     {
-        return [
-            self::TYPE_FORMULIR => 'Formulir',
-            self::TYPE_JUKNIS => 'Petunjuk Teknis (Juknis)',
-            self::TYPE_LAINNYA => 'Lainnya',
-        ];
+        return $this->belongsTo(DownloadCategory::class, 'category_id');
     }
 
     /**

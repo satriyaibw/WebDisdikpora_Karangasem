@@ -2,17 +2,26 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Public\PpidTabs;
 use App\Models\Agenda;
 use App\Models\Album;
 use App\Models\AlbumPhoto;
 use App\Models\Announcement;
+use App\Models\DownloadCategory;
 use App\Models\DownloadFile;
 use App\Models\Infographic;
 use App\Models\News;
+use App\Models\Official;
+use App\Models\PpidCategory;
+use App\Models\PpidDocument;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\Video;
+use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class PublicPagesTest extends TestCase
@@ -216,6 +225,17 @@ class PublicPagesTest extends TestCase
         $this->assertEquals(1, $news->fresh()->views_count);
     }
 
+    public function test_berita_views_counted_once_per_day(): void
+    {
+        $news = $this->makeNews(['title' => 'Berita Throttle Uji', 'slug' => 'berita-throttle-uji']);
+
+        $this->get(route('berita.show', $news->slug));
+        $this->get(route('berita.show', $news->slug));
+        $this->get(route('berita.show', $news->slug));
+
+        $this->assertEquals(1, $news->fresh()->views_count);
+    }
+
     public function test_draft_news_detail_is_not_accessible(): void
     {
         $this->makeNews(['slug' => 'berita-draft', 'status' => News::STATUS_DRAFT]);
@@ -292,6 +312,34 @@ class PublicPagesTest extends TestCase
             ->assertDontSee('Berkas Rahasia');
     }
 
+    public function test_unduhan_groups_files_by_category_and_hides_empty_categories(): void
+    {
+        $category = DownloadCategory::create([
+            'name' => 'Kategori Uji Unduhan',
+            'slug' => 'kategori-uji-unduhan',
+            'sort_order' => 1,
+        ]);
+        $emptyCategory = DownloadCategory::create([
+            'name' => 'Kategori Kosong',
+            'slug' => 'kategori-kosong',
+            'sort_order' => 2,
+        ]);
+
+        DownloadFile::create([
+            'title' => 'Berkas Kategori Uji',
+            'slug' => 'berkas-kategori-uji',
+            'category_id' => $category->id,
+            'file_path' => 'lampiran/unduhan/kategori-uji.pdf',
+            'status' => DownloadFile::STATUS_PUBLISHED,
+        ]);
+
+        $this->get(route('unduhan.index'))
+            ->assertOk()
+            ->assertSee('Kategori Uji Unduhan')
+            ->assertSee('Berkas Kategori Uji')
+            ->assertDontSee('Kategori Kosong');
+    }
+
     /** ============================= Kontak ============================= */
     public function test_kontak_page_renders_maps_and_lapor_link(): void
     {
@@ -314,13 +362,13 @@ class PublicPagesTest extends TestCase
     {
         settings('site.short_name');
 
-        \Illuminate\Support\Facades\DB::table('settings')
+        DB::table('settings')
             ->where('key', 'site.short_name')
             ->update(['value' => 'Nama Baru']);
 
         $this->assertSame('Disdikpora Karangasem', settings('site.short_name'));
 
-        \App\Support\Settings::flush();
+        Settings::flush();
 
         $this->assertSame('Nama Baru', settings('site.short_name'));
     }
@@ -331,6 +379,14 @@ class PublicPagesTest extends TestCase
     }
 
     /** ============================= Regresi bug Fase 6 ============================= */
+    public function test_ppid_search_does_not_trigger_error(): void
+    {
+        Livewire::test(PpidTabs::class)
+            ->set('search', 'LAKIP')
+            ->assertOk()
+            ->assertSee('LAKIP Disdikpora Karangasem');
+    }
+
     public function test_galeri_show_subtitle_includes_photo_count(): void
     {
         $album = Album::create(['title' => 'Album Dengan Foto']);
@@ -344,6 +400,9 @@ class PublicPagesTest extends TestCase
 
     public function test_galeri_index_shows_cover_photo_of_album(): void
     {
+        Storage::fake('public');
+        Storage::disk('public')->put('galeri/utama.jpg', 'gambar');
+
         $album = Album::create(['title' => 'Album Sampul']);
         AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/sampul.jpg', 'sort_order' => 2]);
         AlbumPhoto::create(['album_id' => $album->id, 'photo_path' => 'galeri/utama.jpg', 'sort_order' => 1]);
@@ -356,24 +415,24 @@ class PublicPagesTest extends TestCase
 
     public function test_ppid_tab_badge_counts_only_published_documents(): void
     {
-        $category = \App\Models\PpidCategory::create([
+        $category = PpidCategory::create([
             'name' => 'Kategori Uji Badge',
             'slug' => 'kategori-uji-badge',
         ]);
-        \App\Models\PpidDocument::create([
+        PpidDocument::create([
             'title' => 'Dokumen Terbit Uji',
             'file_path' => 'ppid/dokumen-terbit.pdf',
-            'status' => \App\Models\PpidDocument::STATUS_PUBLISHED,
+            'status' => PpidDocument::STATUS_PUBLISHED,
             'category_id' => $category->id,
         ]);
-        \App\Models\PpidDocument::create([
+        PpidDocument::create([
             'title' => 'Dokumen Draft Uji',
             'file_path' => 'ppid/dokumen-draft.pdf',
-            'status' => \App\Models\PpidDocument::STATUS_DRAFT,
+            'status' => PpidDocument::STATUS_DRAFT,
             'category_id' => $category->id,
         ]);
 
-        \Livewire\Livewire::test(\App\Livewire\Public\PpidTabs::class)
+        Livewire::test(PpidTabs::class)
             ->set('activeCategorySlug', 'kategori-uji-badge')
             ->assertSee('Dokumen Terbit Uji')
             ->assertDontSee('Dokumen Draft Uji');
@@ -432,7 +491,7 @@ class PublicPagesTest extends TestCase
 
     public function test_profil_page_shows_custom_kadis_name_from_settings(): void
     {
-        \App\Support\Settings::set('profile.kadis_name', 'Drs. I Wayan Suparta, M.M.');
+        Settings::set('profile.kadis_name', 'Drs. I Wayan Suparta, M.M.');
 
         $this->get(route('profil'))
             ->assertOk()
@@ -441,18 +500,18 @@ class PublicPagesTest extends TestCase
 
     public function test_struktur_page_shows_active_officials_tree(): void
     {
-        $kadis = \App\Models\Official::create([
+        $kadis = Official::create([
             'jabatan' => 'Kepala Dinas',
             'nama' => 'Drs. I Wayan Suparta, M.M.',
             'is_active' => true,
         ]);
-        $sekretariat = \App\Models\Official::create([
+        $sekretariat = Official::create([
             'jabatan' => 'Sekretariat',
             'nama' => 'I Gede Sudarma, S.Pd., M.Pd.',
             'parent_id' => $kadis->id,
             'is_active' => true,
         ]);
-        \App\Models\Official::create([
+        Official::create([
             'jabatan' => 'Kepala Bidang Pembinaan Pendidikan SD',
             'nama' => '-',
             'parent_id' => $sekretariat->id,
@@ -470,7 +529,7 @@ class PublicPagesTest extends TestCase
 
     public function test_struktur_page_hides_inactive_officials(): void
     {
-        \App\Models\Official::create([
+        Official::create([
             'jabatan' => 'Kepala Dinas Nonaktif',
             'nama' => 'Bukan Nama Tampil',
             'is_active' => false,

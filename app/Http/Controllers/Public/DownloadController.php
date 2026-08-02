@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\DownloadFile;
+use App\Models\DownloadCategory;
 
 class DownloadController extends Controller
 {
     public function index()
     {
-        $groups = DownloadFile::published()
-            ->orderBy('type')
-            ->orderBy('title')
+        $groups = DownloadCategory::query()
+            ->with(['downloadFiles' => fn ($query) => $query->published()->orderBy('title')])
+            ->orderBy('sort_order')
+            ->orderBy('id')
             ->get()
-            ->groupBy(fn (DownloadFile $file) => $file->type);
+            ->filter(fn (DownloadCategory $category) => $category->downloadFiles->isNotEmpty());
 
-        $typeLabels = DownloadFile::typeOptions();
-
-        return view('pages.unduhan', compact('groups', 'typeLabels'));
+        return view('pages.unduhan', compact('groups'));
     }
 }
