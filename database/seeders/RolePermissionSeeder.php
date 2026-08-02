@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
      * Fase 3: modul konten (berita, pengumuman, agenda, slider, galeri).
      * Fase 4: modul repositori dokumen PPID.
      * Fase 5: katalog layanan publik, repositori SOP & pusat unduhan.
+     * Fase 6: seksi profil dinamis & tautan terkait footer.
      */
     public const PERMISSIONS = [
         'panel.access',
@@ -82,10 +83,14 @@ class RolePermissionSeeder extends Seeder
         'unduhan.delete',
         'setting.read',
         'setting.update',
-        'official.read',
-        'official.create',
-        'official.update',
-        'official.delete',
+        'profile.read',
+        'profile.create',
+        'profile.update',
+        'profile.delete',
+        'tautan.read',
+        'tautan.create',
+        'tautan.update',
+        'tautan.delete',
     ];
 
     /**

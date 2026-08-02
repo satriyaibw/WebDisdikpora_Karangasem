@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Setting;
 use App\Support\Settings;
 use Filament\Actions;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +15,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
 class Pengaturan extends Page implements HasForms
 {
@@ -58,9 +60,7 @@ class Pengaturan extends Page implements HasForms
                 'kadis_name' => settings('profile.kadis_name', ''),
                 'sekretariat_name' => settings('profile.sekretariat_name', ''),
                 'welcome' => settings('profile.welcome', ''),
-                'vision' => settings('profile.vision', ''),
-                'mission' => settings('profile.mission', ''),
-                'duties' => settings('profile.duties', ''),
+                'struktur_image' => settings('profile.struktur_image', ''),
             ],
         ]);
     }
@@ -103,7 +103,7 @@ class Pengaturan extends Page implements HasForms
                     ->columns(2),
 
                 Section::make('Profil Instansi')
-                    ->description('Konten halaman Profil Instansi di portal publik. Kosongkan untuk memakai teks bawaan.')
+                    ->description('Sambutan Kepala Dinas yang tampil di halaman Profil. Seksi lain (Visi, Misi, Tugas & Fungsi, dll) dikelola lewat menu "Seksi Profil" pada grup Profil.')
                     ->schema([
                         TextInput::make('profile.kadis_name')
                             ->label('Nama Kepala Dinas')
@@ -118,26 +118,13 @@ class Pengaturan extends Page implements HasForms
                                 'orderedList', 'bulletList', 'blockquote', 'h2', 'h3', 'undo', 'redo',
                             ])
                             ->columnSpanFull(),
-                        RichEditor::make('profile.vision')
-                            ->label('Visi')
-                            ->toolbarButtons([
-                                'bold', 'italic', 'underline', 'link',
-                                'orderedList', 'bulletList', 'undo', 'redo',
-                            ])
-                            ->columnSpanFull(),
-                        RichEditor::make('profile.mission')
-                            ->label('Misi')
-                            ->toolbarButtons([
-                                'bold', 'italic', 'underline', 'link',
-                                'orderedList', 'bulletList', 'undo', 'redo',
-                            ])
-                            ->columnSpanFull(),
-                        RichEditor::make('profile.duties')
-                            ->label('Tugas & Fungsi')
-                            ->toolbarButtons([
-                                'bold', 'italic', 'underline', 'link',
-                                'orderedList', 'bulletList', 'undo', 'redo',
-                            ])
+                        FileUpload::make('profile.struktur_image')
+                            ->label('Gambar Struktur Organisasi')
+                            ->disk('public')
+                            ->directory('struktur')
+                            ->image()
+                            ->maxSize(3072)
+                            ->helperText('Unggah bagan struktur organisasi (PNG/JPG, maks. 3 MB). Gambar ditampilkan di halaman /profil/struktur. File lama otomatis dihapus saat diganti atau dikosongkan.')
                             ->columnSpanFull(),
                     ]),
             ])
@@ -160,6 +147,13 @@ class Pengaturan extends Page implements HasForms
             );
         }
 
+        $oldStruktur = settings('profile.struktur_image');
+        $newStruktur = $data['profile.struktur_image'] ?? null;
+
+        if ($oldStruktur && $oldStruktur !== $newStruktur) {
+            Storage::disk('public')->delete($oldStruktur);
+        }
+
         Settings::flush();
 
         Notification::make()
@@ -175,7 +169,8 @@ class Pengaturan extends Page implements HasForms
                 ->label('Simpan Pengaturan')
                 ->icon('heroicon-o-check')
                 ->submit('form')
-                ->formId('form'),
+                ->formId('form')
+                ->visible(fn (): bool => auth()->user()?->can('setting.update') ?? false),
         ];
     }
 

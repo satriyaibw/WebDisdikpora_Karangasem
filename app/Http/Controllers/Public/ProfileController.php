@@ -3,28 +3,22 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\Official;
+use App\Models\ProfileSection;
 
 class ProfileController extends Controller
 {
     public function index()
     {
-        return view('pages.profil');
-    }
-
-    public function struktur()
-    {
-        $tree = Official::active()
-            ->with([
-                'children' => fn ($query) => $query->active(),
-                'children.children' => fn ($query) => $query->active(),
-                'children.children.children' => fn ($query) => $query->active(),
-            ])
-            ->whereNull('parent_id')
+        $sections = ProfileSection::active()
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
-        return view('pages.profil-struktur', compact('tree'));
+        return view('pages.profil', compact('sections'));
+    }
+
+    public function struktur()
+    {
+        return view('pages.profil-struktur');
     }
 }

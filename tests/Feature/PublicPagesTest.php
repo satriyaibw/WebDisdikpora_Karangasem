@@ -11,14 +11,16 @@ use App\Models\DownloadCategory;
 use App\Models\DownloadFile;
 use App\Models\Infographic;
 use App\Models\News;
-use App\Models\Official;
 use App\Models\PpidCategory;
 use App\Models\PpidDocument;
+use App\Models\ProfileSection;
+use App\Models\RelatedLink;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\Video;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -127,14 +129,6 @@ class PublicPagesTest extends TestCase
             ->assertSee('Visi')
             ->assertSee('Misi')
             ->assertSee(route('profil.struktur'));
-    }
-
-    public function test_struktur_page_renders_bidangs(): void
-    {
-        $this->get(route('profil.struktur'))
-            ->assertOk()
-            ->assertSee('Kepala Dinas')
-            ->assertSee('Sekretariat');
     }
 
     /** ============================= Layanan ============================= */
@@ -485,7 +479,9 @@ class PublicPagesTest extends TestCase
         $this->get(route('profil'))
             ->assertOk()
             ->assertSee('Sambutan Kepala Dinas')
+            ->assertSee('Visi')
             ->assertSee('Terwujudnya sumber daya manusia yang unggul')
+            ->assertSee('Misi')
             ->assertSee('Meningkatkan mutu dan pemerataan layanan pendidikan');
     }
 
@@ -498,46 +494,110 @@ class PublicPagesTest extends TestCase
             ->assertSee('Drs. I Wayan Suparta, M.M.');
     }
 
-    public function test_struktur_page_shows_active_officials_tree(): void
+    public function test_profil_page_shows_dynamic_section_in_sort_order(): void
     {
-        $kadis = Official::create([
-            'jabatan' => 'Kepala Dinas',
-            'nama' => 'Drs. I Wayan Suparta, M.M.',
-            'is_active' => true,
-        ]);
-        $sekretariat = Official::create([
-            'jabatan' => 'Sekretariat',
-            'nama' => 'I Gede Sudarma, S.Pd., M.Pd.',
-            'parent_id' => $kadis->id,
-            'is_active' => true,
-        ]);
-        Official::create([
-            'jabatan' => 'Kepala Bidang Pembinaan Pendidikan SD',
-            'nama' => '-',
-            'parent_id' => $sekretariat->id,
+        ProfileSection::create([
+            'title' => 'Program Prioritas',
+            'slug' => 'program-prioritas',
+            'content' => '<p>Prioritas pembangunan pendidikan 2026.</p>',
+            'sort_order' => 1,
             'is_active' => true,
         ]);
 
-        $this->get(route('profil.struktur'))
-            ->assertOk()
-            ->assertSee('Kepala Dinas')
-            ->assertSee('Drs. I Wayan Suparta, M.M.')
-            ->assertSee('Sekretariat')
-            ->assertSee('I Gede Sudarma, S.Pd., M.Pd.')
-            ->assertSee('Kepala Bidang Pembinaan Pendidikan SD');
+        $response = $this->get(route('profil'))->assertOk();
+
+        $this->assertStringContainsString('Program Prioritas', $response->getContent());
+        $this->assertStringContainsString('Prioritas pembangunan pendidikan 2026', $response->getContent());
     }
 
-    public function test_struktur_page_hides_inactive_officials(): void
+    public function test_profil_page_hides_inactive_section(): void
     {
-        Official::create([
-            'jabatan' => 'Kepala Dinas Nonaktif',
-            'nama' => 'Bukan Nama Tampil',
+        ProfileSection::create([
+            'title' => 'Rahasia Internal',
+            'slug' => 'rahasia-internal',
+            'content' => '<p>Tidak boleh tampil.</p>',
+            'sort_order' => 9,
             'is_active' => false,
         ]);
 
+        $this->get(route('profil'))
+            ->assertOk()
+            ->assertDontSee('Rahasia Internal')
+            ->assertDontSee('Tidak boleh tampil');
+    }
+
+    public function test_profil_page_sanitizes_section_content(): void
+    {
+        ProfileSection::create([
+            'title' => 'Seksi Sanitasi',
+            'slug' => 'seksi-sanitasi',
+            'content' => '<p>Konten aman</p><script>alert("xss-seksi")</script>',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->get(route('profil'))
+            ->assertOk()
+            ->assertSee('Konten aman')
+            ->assertDontSee('alert("xss-seksi")');
+    }
+
+    public function test_struktur_page_shows_uploaded_image(): void
+    {
+        Storage::fake('public');
+        UploadedFile::fake()->image('struktur.png')->storeAs('struktur', 'struktur.png', 'public');
+        Settings::set('profile.struktur_image', 'struktur/struktur.png');
+
         $this->get(route('profil.struktur'))
             ->assertOk()
-            ->assertDontSee('Kepala Dinas Nonaktif')
-            ->assertDontSee('Bukan Nama Tampil');
+            ->assertSee(Storage::disk('public')->url('struktur/struktur.png'));
+    }
+
+    public function test_struktur_page_shows_empty_state_when_no_image(): void
+    {
+        $this->get(route('profil.struktur'))
+            ->assertOk()
+            ->assertSee('Bagan struktur organisasi belum tersedia.');
+    }
+
+    public function test_footer_shows_seeded_related_link(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Tautan Terkait')
+            ->assertSee('SP4N-LAPOR!')
+            ->assertSee('https://www.lapor.go.id');
+    }
+
+    public function test_footer_hides_inactive_related_links(): void
+    {
+        RelatedLink::where('name', 'SP4N-LAPOR!')->update(['is_active' => false]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('SP4N-LAPOR!');
+    }
+
+    public function test_footer_lists_related_links_in_sort_order(): void
+    {
+        RelatedLink::create([
+            'name' => 'Portal Kabupaten',
+            'url' => 'https://www.karangasemkab.go.id',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        RelatedLink::create([
+            'name' => 'JDIH Karangasem',
+            'url' => 'https://jdih.karangasemkab.go.id',
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $html = $this->get(route('home'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertTrue(strpos($html, 'SP4N-LAPOR!') < strpos($html, 'Portal Kabupaten'));
+        $this->assertTrue(strpos($html, 'Portal Kabupaten') < strpos($html, 'JDIH Karangasem'));
     }
 }
