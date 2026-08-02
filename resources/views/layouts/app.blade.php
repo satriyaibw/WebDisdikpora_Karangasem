@@ -15,14 +15,23 @@
         $ogTitle = $ogSiteName;
         $ogDescription = settings('site.tagline', '');
         $ogImage = url('images/disdikpora-logo.svg');
+
+        $sections = app('view')->getSections();
+        $yield = static fn (string $name, string $fallback): string => trim((string) ($sections[$name] ?? '')) !== ''
+            ? app('view')->yieldContent($name)
+            : $fallback;
+
+        $ogType = $yield('og:type', 'website');
+        $ogTitleMeta = $yield('ogTitle', $ogTitle);
+        $ogDescriptionMeta = $yield('ogDescription', $ogDescription);
+        $ogImageMeta = $yield('ogImage', $ogImage);
     @endphp
 
-    {{-- OpenGraph / Twitter — nilai default dari settings, boleh dioversi via @push('meta') --}}
     <meta property="og:site_name" content="{{ $ogSiteName }}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $ogTitle }}">
-    <meta property="og:description" content="{{ $ogDescription }}">
-    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:type" content="{{ $ogType }}">
+    <meta property="og:title" content="{{ $ogTitleMeta }}">
+    <meta property="og:description" content="{{ $ogDescriptionMeta }}">
+    <meta property="og:image" content="{{ $ogImageMeta }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $ogTitle }}">

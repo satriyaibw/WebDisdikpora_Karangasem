@@ -4,15 +4,20 @@ namespace App\Support;
 
 use Closure;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
- * Query caching untuk data publik (Fase 7.1).
+ * Query caching untuk data publik (Fase 7.1, disempurnakan review).
  *
- * Semua nilai disimpan di driver cache (Redis saat runtime, array saat
- * test) dengan prefix skema key `public.`. Key statis di-forget persis
- * oleh invalidasi berbasis Eloquent model event saat admin menyimpan,
- * sedangkan key daftar yang dipaginasi/filter cukup andalkan TTL agar
- * data tidak pernah basi melebihi TTL (default 10 menit).
+ * Semua nilai disimpan dengan prefix skema key `public.` serta di-tag
+ * dengan domain (mis. `PublicCache::TAG_NEWS`). Invalidasi memakai
+ * `Cache::tags(...)->flush()` sehingga daftar yang dipaginasi/search
+ * ikut dibersihkan presisi saat model berubah — bukan menunggu TTL.
+ *
+ * Store `array`/`redis`/`memcached` mendukung tags (Laravel
+ * `TaggableStore`); bila store tidak mendukung tag (mis. `file`/
+ * `database`), metode ini jatuh ke key tunggal tak bertag dan key
+ * turunan cukup mengandalkan TTL seperti semula.
  */
 class PublicCache
 {
@@ -25,6 +30,30 @@ class PublicCache
      * TTL untuk sitemap (detik) — 1 jam.
      */
     public const TTL_SITEMAP = 3600;
+
+    /* ----------------- Tag domain (reader & invalidator bersama) ----------------- */
+
+    public const TAG_HOME = 'home';
+
+    public const TAG_NEWS = 'news';
+
+    public const TAG_AGENDA = 'agenda';
+
+    public const TAG_GALERI = 'galeri';
+
+    public const TAG_DOWNLOADS = 'downloads';
+
+    public const TAG_PROFILE = 'profile';
+
+    public const TAG_SERVICES = 'services';
+
+    public const TAG_SOPS = 'sops';
+
+    public const TAG_PPID = 'ppid';
+
+    public const TAG_ANNOUNCEMENTS = 'announcements';
+
+    public const TAG_SITEMAP = 'sitemap';
 
     /* ----------------- Key statis (dipakai reader & invalidator) ----------------- */
 
@@ -60,17 +89,32 @@ class PublicCache
 
     /**
      * Ambil hasil query dengan cache (wrap `Cache::remember`).
+     *
+     * @param  array<int, string>  $tags  tag domain (mis. [self::TAG_NEWS])
      */
-    public static function remember(string $key, Closure $builder, ?int $ttl = null): mixed
+    public static function remember(string $key, Closure $builder, array $tags = [], ?int $ttl = null): mixed
     {
-        return Cache::remember('public.'.$key, $ttl ?? (int) config('security.public_cache_ttl', self::TTL), $builder);
+        $ttl ??= (int) (config('security.public_cache_ttl', self::TTL));
+        $fullKey = 'public.'.$key;
+
+        if (empty($tags) || ! static::taggable()) {
+            return Cache::remember($fullKey, $ttl, $builder);
+        }
+
+        return Cache::tags($tags)->remember($fullKey, $ttl, $builder);
     }
 
     /**
-     * Hapus satu/beberapa key cache publik secara presisi (bukan flush global).
+     * Hapus data publik. Saat store mendukung tag: flush tag domain
+     * terlebih dahulu (membersihkan semua key turunan di bawahnya),
+     * kemudian forget key statis secara presisi sebagai fallback.
      */
-    public static function forget(string|array $keys): void
+    public static function forget(string|array $keys, array $tags = []): void
     {
+        if (! empty($tags) && static::taggable()) {
+            Cache::tags($tags)->flush();
+        }
+
         foreach ((array) $keys as $key) {
             Cache::forget('public.'.$key);
         }
@@ -78,13 +122,39 @@ class PublicCache
 
     /**
      * Buat key daftar yang unik terhadap parameter dinamis (page/search/filter).
+     *
+     * Input dinormalisasi (lowercase, trim, dibatasi panjangnya) agar
+     * pencarian yang ekuivalen memakai satu slot cache dan tidak membuat
+     * key tak terbatas (pengisi cache) dari masukan pengguna.
      */
     public static function keyFor(string $prefix, array $parts = []): string
     {
-        $normalized = array_map(static fn ($value): string => is_scalar($value)
-            ? (string) $value
-            : (string) json_encode($value), $parts);
+        $normalized = array_map(static fn ($value): string => self::normalizePart(
+            is_scalar($value) ? (string) $value : (string) json_encode($value)
+        ), $parts);
 
         return $prefix.'.'.md5(implode('|', $normalized));
+    }
+
+    /**
+     * Store saat ini mendukung cache tag (Laravel `TaggableStore`).
+     */
+    private static function taggable(): bool
+    {
+        $store = Cache::getStore();
+
+        return is_object($store) && method_exists($store, 'tags');
+    }
+
+    /**
+     * Normalisasi nilai untuk keperluan key cache publik.
+     */
+    private static function normalizePart(string $value): string
+    {
+        return Str::limit(
+            mb_strtolower(trim($value)),
+            80,
+            ''
+        ) ?? '';
     }
 }

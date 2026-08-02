@@ -4,15 +4,13 @@
 
 @section('metaDescription', Str::limit(strip_tags((string) $album->description), 160))
 
-@push('meta')
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="{{ $album->title }}">
-    @if ($firstPhoto = $album->photos->first())
-        @if ($photoUrl = public_url_if_exists($firstPhoto->photo_path))
-            <meta property="og:image" content="{{ url($photoUrl) }}">
-        @endif
+@section('og:type', 'article')
+@section('ogTitle', $album->title)
+@if ($firstPhoto = $album->photos->first())
+    @if ($photoUrl = public_url_if_exists($firstPhoto->photo_path))
+        @section('ogImage', url($photoUrl))
     @endif
-@endpush
+@endif
 
 @section('content')
     <x-page-hero :title="$album->title" :subtitle="'Album foto — ' . $album->photos_count . ' foto'" />

@@ -49,13 +49,16 @@ class SitemapRobotsTest extends TestCase
             ->assertHeader('Content-Type', 'application/xml');
     }
 
-    public function test_robots_txt_points_to_sitemap(): void
+    public function test_robots_txt_points_to_sitemap_via_dynamic_route(): void
     {
-        $this->assertFileExists(public_path('robots.txt'));
+        $response = $this->get('/robots.txt')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
+            ->assertSee('User-agent: *')
+            ->assertSee('Disallow: /admin')
+            ->assertSee('Sitemap: '.url('sitemap.xml'));
 
-        $content = file_get_contents(public_path('robots.txt'));
-        $this->assertStringContainsString('User-agent: *', $content);
-        $this->assertStringContainsString('Disallow: /admin', $content);
-        $this->assertStringContainsString('Sitemap: '.url('sitemap.xml'), $content);
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        $this->assertFileDoesNotExist(public_path('robots.txt'));
     }
 }

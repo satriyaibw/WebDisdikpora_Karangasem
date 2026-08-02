@@ -48,41 +48,48 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Pasang invalidasi cache publik saat data diubah/dihapus (Fase 7.1).
      *
-     * Hanya key statis yang di-forget secara presisi (bukan `cache()->flush()`
-     * global). Daftar yang dipaginasi/dicari cukup bergantung pada TTL.
-     * Nilai yang berupa closure dihitung per-record (mis. key album dari
-     * `album_id` foto yang berubah).
+     * Tiap model memetakan tag domain + key statis. `PublicCache::forget`
+     * mem-flush tag (membersihkan seluruh daftar paginated/search di
+     * bawahnya) bila store mendukung tag, dan forget key statis sebagai
+     * fallback store tanpa tag. Nilai closure dihitung per-record (mis.
+     * key foto untuk `album_id` lama & baru).
      */
     private function registerPublicCacheInvalidation(): void
     {
         $map = [
-            Slider::class => [PublicCache::HOME_SLIDERS, PublicCache::SITEMAP],
-            Announcement::class => [PublicCache::HOME_RUNNING_TEXTS, PublicCache::SITEMAP],
-            News::class => [PublicCache::HOME_LATEST_NEWS, PublicCache::NEWS_CATEGORIES, PublicCache::SITEMAP],
-            Category::class => [PublicCache::NEWS_CATEGORIES, PublicCache::HOME_LATEST_NEWS, PublicCache::SITEMAP],
-            Agenda::class => [PublicCache::HOME_UPCOMING_AGENDAS, PublicCache::AGENDA_FINISHED, PublicCache::SITEMAP],
-            Infographic::class => [PublicCache::HOME_INFOGRAPHICS, PublicCache::SITEMAP],
-            Video::class => [PublicCache::HOME_VIDEOS, PublicCache::GALERI_VIDEOS, PublicCache::SITEMAP],
-            ProfileSection::class => [PublicCache::PROFILE_SECTIONS, PublicCache::SITEMAP],
-            Bidang::class => [PublicCache::SERVICES_BIDANGS, PublicCache::SOPS_BIDANGS, PublicCache::SITEMAP],
-            Service::class => [PublicCache::SITEMAP],
-            SopDocument::class => [PublicCache::SITEMAP],
-            PpidCategory::class => [PublicCache::PPID_CATEGORIES, 'ppid.first_category_slug', PublicCache::SITEMAP],
-            PpidDocument::class => [PublicCache::PPID_CATEGORIES, PublicCache::SITEMAP],
-            DownloadCategory::class => [PublicCache::DOWNLOADS_GROUPS, PublicCache::SITEMAP],
-            DownloadFile::class => [PublicCache::DOWNLOADS_GROUPS, PublicCache::SITEMAP],
-            Album::class => [PublicCache::SITEMAP],
-            AlbumPhoto::class => fn ($record): array => $record->album_id
-                ? ['galeri.album.photos.'.$record->album_id]
-                : [],
+            Slider::class => ['tags' => [PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_SLIDERS]],
+            Announcement::class => ['tags' => [PublicCache::TAG_HOME, PublicCache::TAG_ANNOUNCEMENTS, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_RUNNING_TEXTS]],
+            News::class => ['tags' => [PublicCache::TAG_NEWS, PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_LATEST_NEWS, PublicCache::NEWS_CATEGORIES]],
+            Category::class => ['tags' => [PublicCache::TAG_NEWS, PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::NEWS_CATEGORIES]],
+            Agenda::class => ['tags' => [PublicCache::TAG_AGENDA, PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_UPCOMING_AGENDAS, PublicCache::AGENDA_FINISHED]],
+            Infographic::class => ['tags' => [PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_INFOGRAPHICS]],
+            Video::class => ['tags' => [PublicCache::TAG_GALERI, PublicCache::TAG_HOME, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::HOME_VIDEOS, PublicCache::GALERI_VIDEOS]],
+            ProfileSection::class => ['tags' => [PublicCache::TAG_PROFILE, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::PROFILE_SECTIONS]],
+            Bidang::class => ['tags' => [PublicCache::TAG_SERVICES, PublicCache::TAG_SOPS, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::SERVICES_BIDANGS, PublicCache::SOPS_BIDANGS]],
+            Service::class => ['tags' => [PublicCache::TAG_SERVICES, PublicCache::TAG_SITEMAP], 'keys' => []],
+            SopDocument::class => ['tags' => [PublicCache::TAG_SOPS, PublicCache::TAG_SITEMAP], 'keys' => []],
+            PpidCategory::class => ['tags' => [PublicCache::TAG_PPID, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::PPID_CATEGORIES, 'ppid.first_category_slug']],
+            PpidDocument::class => ['tags' => [PublicCache::TAG_PPID, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::PPID_CATEGORIES]],
+            DownloadCategory::class => ['tags' => [PublicCache::TAG_DOWNLOADS, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::DOWNLOADS_GROUPS]],
+            DownloadFile::class => ['tags' => [PublicCache::TAG_DOWNLOADS, PublicCache::TAG_SITEMAP], 'keys' => [PublicCache::DOWNLOADS_GROUPS]],
+            Album::class => ['tags' => [PublicCache::TAG_GALERI, PublicCache::TAG_SITEMAP], 'keys' => []],
+            AlbumPhoto::class => fn ($record): array => [
+                'tags' => [PublicCache::TAG_GALERI],
+                'keys' => array_values(array_filter([
+                    $record->album_id ? 'galeri.album.photos.'.$record->album_id : null,
+                    $record->getOriginal('album_id') ? 'galeri.album.photos.'.$record->getOriginal('album_id') : null,
+                ])),
+            ],
         ];
 
         foreach ($map as $model => $configuration) {
             foreach (['saved', 'deleted'] as $event) {
-                $model::{$event}(function ($record) use ($configuration) {
-                    PublicCache::forget(is_callable($configuration)
+                $model::{$event}(static function ($record) use ($configuration): void {
+                    $resolved = is_callable($configuration)
                         ? $configuration($record)
-                        : $configuration);
+                        : $configuration;
+
+                    PublicCache::forget($resolved['keys'] ?? [], $resolved['tags'] ?? []);
                 });
             }
         }

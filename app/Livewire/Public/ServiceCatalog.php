@@ -34,7 +34,7 @@ class ServiceCatalog extends Component
 
     public function render()
     {
-        $bidangs = PublicCache::remember(PublicCache::SERVICES_BIDANGS, fn () => Bidang::orderBy('name')->get());
+        $bidangs = PublicCache::remember(PublicCache::SERVICES_BIDANGS, fn () => Bidang::orderBy('name')->get(), [PublicCache::TAG_SERVICES]);
 
         $catalogKey = PublicCache::keyFor('services.catalog', [
             'page' => $this->getPage(),
@@ -49,7 +49,7 @@ class ServiceCatalog extends Component
                 ->orWhere('short_description', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('name')
-            ->paginate(9));
+            ->paginate(9), [PublicCache::TAG_SERVICES]);
 
         return view('livewire.public.service-catalog', compact('bidangs', 'services'));
     }

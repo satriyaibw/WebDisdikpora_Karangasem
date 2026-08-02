@@ -16,12 +16,12 @@ class AgendaController extends Controller
         $upcoming = PublicCache::remember($upcomingKey, fn () => Agenda::whereDate('date', '>=', today())
             ->orderBy('date')
             ->orderBy('start_time')
-            ->paginate(15));
+            ->paginate(15), [PublicCache::TAG_AGENDA]);
 
         $finished = PublicCache::remember(PublicCache::AGENDA_FINISHED, fn () => Agenda::whereDate('date', '<', today())
             ->orderByDesc('date')
             ->limit(6)
-            ->get());
+            ->get(), [PublicCache::TAG_AGENDA]);
 
         return view('pages.agenda', compact('upcoming', 'finished'));
     }

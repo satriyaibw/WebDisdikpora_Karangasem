@@ -15,7 +15,7 @@ class AnnouncementController extends Controller
 
         $announcements = PublicCache::remember($listKey, fn () => Announcement::published()
             ->latest('announcement_date')
-            ->paginate(10));
+            ->paginate(10), [PublicCache::TAG_ANNOUNCEMENTS]);
 
         return view('pages.pengumuman', compact('announcements'));
     }

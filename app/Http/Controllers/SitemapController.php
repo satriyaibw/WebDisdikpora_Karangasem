@@ -7,7 +7,7 @@ use App\Models\News;
 use App\Models\Service;
 use App\Models\SopDocument;
 use App\Support\PublicCache;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 /**
  * Menghasilkan `sitemap.xml` dinamis (Fase 7.3).
@@ -26,7 +26,7 @@ class SitemapController extends Controller
             ...$this->serviceUrls(),
             ...$this->sopUrls(),
             ...$this->albumUrls(),
-        ], PublicCache::TTL_SITEMAP);
+        ], [PublicCache::TAG_SITEMAP], PublicCache::TTL_SITEMAP);
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";

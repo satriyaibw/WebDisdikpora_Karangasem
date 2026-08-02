@@ -15,7 +15,7 @@ class DownloadController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
-            ->filter(fn (DownloadCategory $category) => $category->downloadFiles->isNotEmpty()));
+            ->filter(fn (DownloadCategory $category) => $category->downloadFiles->isNotEmpty()), [PublicCache::TAG_DOWNLOADS]);
 
         return view('pages.unduhan', compact('groups'));
     }

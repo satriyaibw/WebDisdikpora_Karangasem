@@ -11,12 +11,14 @@ use App\Http\Controllers\Public\PpidController;
 use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\ServiceController;
 use App\Http\Controllers\Public\SopController;
+use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/robots.txt', RobotsController::class)->name('robots');
 
 Route::get('/profil', [ProfileController::class, 'index'])->name('profil');
 Route::get('/profil/struktur', [ProfileController::class, 'struktur'])->name('profil.struktur');

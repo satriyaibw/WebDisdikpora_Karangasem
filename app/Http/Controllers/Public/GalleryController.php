@@ -18,7 +18,7 @@ class GalleryController extends Controller
         $albums = PublicCache::remember($albumsKey, fn () => Album::withCount('photos')
             ->with('coverPhoto')
             ->latest()
-            ->paginate(9));
+            ->paginate(9), [PublicCache::TAG_GALERI]);
 
         $videos = PublicCache::remember(PublicCache::GALERI_VIDEOS, fn () => Video::published()
             ->latest()
@@ -29,7 +29,7 @@ class GalleryController extends Controller
                 return $video;
             })
             ->filter(fn (Video $video) => $video->youtube_id !== null)
-            ->take(6));
+            ->take(6), [PublicCache::TAG_GALERI]);
 
         return view('pages.galeri', compact('albums', 'videos'));
     }
@@ -41,7 +41,7 @@ class GalleryController extends Controller
         $photos = PublicCache::remember('galeri.album.photos.'.$album->getKey(), fn () => $album->photos()
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get());
+            ->get(), [PublicCache::TAG_GALERI]);
 
         $album->setRelation('photos', $photos);
 

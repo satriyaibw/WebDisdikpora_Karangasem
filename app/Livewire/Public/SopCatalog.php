@@ -34,7 +34,7 @@ class SopCatalog extends Component
 
     public function render()
     {
-        $bidangs = PublicCache::remember(PublicCache::SOPS_BIDANGS, fn () => Bidang::orderBy('name')->get());
+        $bidangs = PublicCache::remember(PublicCache::SOPS_BIDANGS, fn () => Bidang::orderBy('name')->get(), [PublicCache::TAG_SOPS]);
 
         $catalogKey = PublicCache::keyFor('sops.catalog', [
             'page' => $this->getPage(),
@@ -49,7 +49,7 @@ class SopCatalog extends Component
                 ->orWhere('sop_number', 'like', '%'.escapeLike($this->search).'%')))
             ->when($this->bidangId, fn ($query) => $query->where('bidang_id', $this->bidangId))
             ->orderBy('title')
-            ->paginate(10));
+            ->paginate(10), [PublicCache::TAG_SOPS]);
 
         return view('livewire.public.sop-catalog', compact('bidangs', 'sops'));
     }

@@ -14,7 +14,7 @@ class NewsController extends Controller
     {
         $categories = PublicCache::remember(PublicCache::NEWS_CATEGORIES, fn () => Category::withCount(['news' => fn ($query) => $query->published()])
             ->orderBy('name')
-            ->get());
+            ->get(), [PublicCache::TAG_NEWS]);
 
         $activeCategory = $request->query('category');
         $search = $request->query('q');
@@ -36,7 +36,7 @@ class NewsController extends Controller
                 ->orWhere('excerpt', 'like', '%'.escapeLike($search).'%')))
             ->orderByRaw('published_at IS NULL, published_at DESC')
             ->paginate(9)
-            ->withQueryString());
+            ->withQueryString(), [PublicCache::TAG_NEWS]);
 
         return view('pages.berita', compact('news', 'categories', 'activeCategory', 'search'));
     }
@@ -53,7 +53,7 @@ class NewsController extends Controller
             ->when($news->category_id, fn ($query) => $query->where('category_id', $news->category_id))
             ->orderByRaw('published_at IS NULL, published_at DESC')
             ->limit(3)
-            ->get());
+            ->get(), [PublicCache::TAG_NEWS]);
 
         return view('pages.berita-show', compact('news', 'related'));
     }

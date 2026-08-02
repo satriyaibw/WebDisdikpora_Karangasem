@@ -4,14 +4,12 @@
 
 @section('metaDescription', Str::limit(strip_tags((string) $news->excerpt), 160))
 
-@push('meta')
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="{{ $news->title }}">
-    <meta property="og:description" content="{{ Str::limit(strip_tags((string) $news->excerpt), 160) }}">
-    @if ($coverUrl = public_url_if_exists($news->cover_image))
-        <meta property="og:image" content="{{ url($coverUrl) }}">
-    @endif
-@endpush
+@section('og:type', 'article')
+@section('ogTitle', $news->title)
+@section('ogDescription', Str::limit(strip_tags((string) $news->excerpt), 160))
+@if ($coverUrl = public_url_if_exists($news->cover_image))
+    @section('ogImage', url($coverUrl))
+@endif
 
 @section('content')
     <article class="mx-auto max-w-4xl px-4 py-10 sm:px-6">

@@ -18,7 +18,7 @@ class HomeController extends Controller
     {
         $sliders = PublicCache::remember(PublicCache::HOME_SLIDERS, fn () => Slider::active()
             ->orderBy('sort_order')
-            ->get());
+            ->get(), [PublicCache::TAG_HOME]);
 
         $runningTexts = PublicCache::remember(PublicCache::HOME_RUNNING_TEXTS, fn () => Announcement::published()
             ->where('is_important', true)
@@ -28,20 +28,20 @@ class HomeController extends Controller
             ->whenEmpty(fn ($collection) => Announcement::published()
                 ->latest('announcement_date')
                 ->limit(5)
-                ->get()));
+                ->get()), [PublicCache::TAG_HOME, PublicCache::TAG_ANNOUNCEMENTS]);
 
         $latestNews = PublicCache::remember(PublicCache::HOME_LATEST_NEWS, fn () => News::published()
             ->with(['category', 'author'])
             ->orderByRaw('published_at IS NULL, published_at DESC')
             ->limit(6)
-            ->get());
+            ->get(), [PublicCache::TAG_HOME, PublicCache::TAG_NEWS]);
 
         $upcomingAgendas = PublicCache::remember(PublicCache::HOME_UPCOMING_AGENDAS, fn () => Agenda::whereDate('date', '>=', today())
             ->orderBy('date')
             ->limit(4)
-            ->get());
+            ->get(), [PublicCache::TAG_HOME, PublicCache::TAG_AGENDA]);
 
-        $infographics = PublicCache::remember(PublicCache::HOME_INFOGRAPHICS, fn () => Infographic::active()->get());
+        $infographics = PublicCache::remember(PublicCache::HOME_INFOGRAPHICS, fn () => Infographic::active()->get(), [PublicCache::TAG_HOME]);
 
         $videos = PublicCache::remember(PublicCache::HOME_VIDEOS, function () {
             return Video::published()
@@ -54,7 +54,7 @@ class HomeController extends Controller
                     return $video;
                 })
                 ->filter(fn (Video $video) => $video->youtube_id !== null);
-        });
+        }, [PublicCache::TAG_HOME, PublicCache::TAG_GALERI]);
 
         return view('pages.home', compact(
             'sliders',

@@ -13,7 +13,7 @@ class ProfileController extends Controller
         $sections = PublicCache::remember(PublicCache::PROFILE_SECTIONS, fn () => ProfileSection::active()
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get());
+            ->get(), [PublicCache::TAG_PROFILE]);
 
         return view('pages.profil', compact('sections'));
     }
