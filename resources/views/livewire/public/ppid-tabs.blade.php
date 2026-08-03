@@ -54,17 +54,28 @@
                                 <td class="px-4 py-3 text-slate-600">{{ \App\Models\PpidDocument::formatFileSize($document->file_size) }}</td>
                                 <td class="px-4 py-3 text-right">
                                     @if ($fileUrl = public_url_if_exists($document->file_path))
-                                        <a
-                                            href="{{ $fileUrl }}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600"
-                                        >
-                                            Buka PDF
-                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                            </svg>
-                                        </a>
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <a
+                                                href="{{ $fileUrl }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600"
+                                            >
+                                                Buka PDF
+                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                                </svg>
+                                            </a>
+                                            <a
+                                                href="{{ route('ppid.download', $document) }}"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-gold-500 px-3 py-1.5 text-xs font-bold text-slate-900 transition hover:bg-gold-400"
+                                            >
+                                                Unduh
+                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                            </a>
+                                        </div>
                                     @else
                                         <span class="text-xs text-slate-400">Tidak tersedia</span>
                                     @endif

@@ -209,11 +209,8 @@ class SopDocumentResource extends Resource
                 Tables\Actions\Action::make('download')
                     ->label('Unduh PDF')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (SopDocument $record): ?string => filled($record->file_path) && Storage::disk('public')->exists($record->file_path)
-                        ? Storage::disk('public')->url($record->file_path)
-                        : null)
+                    ->action(fn (SopDocument $record) => Storage::disk('public')->download($record->file_path))
                     ->disabled(fn (SopDocument $record): bool => blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path))
-                    ->openUrlInNewTab()
                     ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

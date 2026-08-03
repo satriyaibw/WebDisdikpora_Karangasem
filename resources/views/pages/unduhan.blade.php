@@ -40,9 +40,9 @@
                                             <td class="max-w-xs px-5 py-4 text-slate-600">{{ Str::limit(strip_tags((string) $file->description), 90) }}</td>
                                             <td class="px-5 py-4 text-slate-600">{{ \App\Models\DownloadFile::formatFileSize($file->file_size) }}</td>
                                             <td class="px-5 py-4 text-right">
-                                                @if ($fileUrl = public_url_if_exists($file->file_path))
+                                                @if ($file->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($file->file_path))
                                                     <a
-                                                        href="{{ $fileUrl }}"
+                                                        href="{{ route('unduhan.download', $file) }}"
                                                         class="inline-flex items-center gap-1.5 rounded-lg bg-gold-500 px-3 py-1.5 text-xs font-bold text-slate-900 transition hover:bg-gold-400"
                                                     >
                                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

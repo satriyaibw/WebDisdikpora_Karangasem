@@ -69,7 +69,7 @@
                     @if ($service->hasFormTemplate)
                         <div class="border-t border-slate-100 px-6 py-4">
                             <a
-                                href="{{ $service->form_template_url }}"
+                                href="{{ route('layanan.unduh-formulir', $service) }}"
                                 class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gold-500 px-4 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-gold-400"
                             >
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

@@ -20,7 +20,7 @@
                                 Pratinjau Dokumen
                             </p>
                             <a
-                                href="{{ $sopDocument->fileUrl }}"
+                                href="{{ route('sop.download', $sopDocument) }}"
                                 class="inline-flex items-center gap-1.5 rounded-lg bg-gold-500 px-4 py-1.5 text-xs font-bold text-slate-900 transition hover:bg-gold-400"
                             >
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
