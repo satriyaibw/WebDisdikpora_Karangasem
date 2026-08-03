@@ -20,4 +20,11 @@ class SopController extends Controller
 
         return view('pages.sop-show', compact('sopDocument'));
     }
+
+    public function download(SopDocument $sopDocument)
+    {
+        abort_unless($sopDocument->status === SopDocument::STATUS_PUBLISHED, 404);
+
+        return public_download_response($sopDocument->file_path);
+    }
 }

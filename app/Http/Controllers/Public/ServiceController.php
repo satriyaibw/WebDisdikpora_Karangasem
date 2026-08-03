@@ -20,4 +20,11 @@ class ServiceController extends Controller
 
         return view('pages.layanan-show', compact('service'));
     }
+
+    public function download(Service $service)
+    {
+        abort_unless($service->status === Service::STATUS_PUBLISHED, 404);
+
+        return public_download_response($service->form_template);
+    }
 }

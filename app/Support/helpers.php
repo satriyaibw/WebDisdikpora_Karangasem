@@ -2,6 +2,7 @@
 
 use App\Support\Settings;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 if (! function_exists('settings')) {
     /**
@@ -28,6 +29,23 @@ if (! function_exists('public_url_if_exists')) {
         return Storage::disk('public')->exists($path)
             ? Storage::disk('public')->url($path)
             : null;
+    }
+}
+
+if (! function_exists('public_download_response')) {
+    /**
+     * Respon unduhan asli (`Content-Disposition: attachment`) untuk berkas
+     * di disk `public`, memakai nama asli berkas dari `$path`.
+     * 404 bila path kosong atau berkas tidak ada di disk — mencegah
+     * unduhan/pratinjau rusak saat berkas dihapus tanpa update baris.
+     */
+    function public_download_response(?string $path): Response
+    {
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->download($path);
     }
 }
 

@@ -5,7 +5,47 @@
 @section('content')
     {{-- Hero slider --}}
     @if ($sliders->isNotEmpty())
-        <section class="relative" x-data="{ current: 0 }" aria-label="Sorotan utama" x-cloak>
+        <section
+            class="relative"
+            x-data="{
+                current: 0,
+                paused: false,
+                count: {{ $sliders->count() }},
+                interval: null,
+                init() {
+                    this.restart();
+                },
+                restart() {
+                    clearInterval(this.interval);
+                    if (this.count < 2) {
+                        return;
+                    }
+                    this.interval = setInterval(() => {
+                        if (this.paused) {
+                            return;
+                        }
+                        this.current = (this.current + 1) % this.count;
+                    }, 5000);
+                },
+                goTo(index) {
+                    this.current = index;
+                    this.restart();
+                },
+                next() {
+                    this.goTo((this.current + 1) % this.count);
+                },
+                prev() {
+                    this.goTo((this.current - 1 + this.count) % this.count);
+                },
+                destroy() {
+                    clearInterval(this.interval);
+                },
+            }"
+            x-on:mouseenter="paused = true"
+            x-on:mouseleave="paused = false; restart()"
+            aria-label="Sorotan utama"
+            x-cloak
+        >
             <div class="relative h-[420px] w-full overflow-hidden sm:h-[480px]">
                 @foreach ($sliders as $index => $slider)
                     @php($sliderUrl = public_url_if_exists($slider->image))
@@ -46,13 +86,13 @@
 
             @if ($sliders->count() > 1)
                 <button type="button" class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/40"
-                        x-on:click="current = (current - 1 + {{ $sliders->count() }}) % {{ $sliders->count() }}" aria-label="Slide sebelumnya">
+                        x-on:click="prev()" aria-label="Slide sebelumnya">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
                 </button>
                 <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/40"
-                        x-on:click="current = (current + 1) % {{ $sliders->count() }}" aria-label="Slide berikutnya">
+                        x-on:click="next()" aria-label="Slide berikutnya">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
@@ -61,7 +101,7 @@
                     @foreach ($sliders as $index => $slider)
                         <button type="button" class="h-2 w-2 rounded-full transition {{ $index === 0 ? 'bg-gold-500' : 'bg-white/60' }}"
                                 :class="current === {{ $index }} ? 'bg-gold-500' : 'bg-white/60'"
-                                x-on:click="current = {{ $index }}" aria-label="Ke slide {{ $index + 1 }}"></button>
+                                x-on:click="goTo({{ $index }})" aria-label="Ke slide {{ $index + 1 }}"></button>
                     @endforeach
                 </div>
             @endif

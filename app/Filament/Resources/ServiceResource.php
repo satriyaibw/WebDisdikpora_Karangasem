@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Rules\ValidPdfFile;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -231,11 +232,19 @@ class ServiceResource extends Resource
                 Tables\Actions\Action::make('download')
                     ->label('Unduh Formulir')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (Service $record): ?string => filled($record->form_template) && Storage::disk('public')->exists($record->form_template)
-                        ? Storage::disk('public')->url($record->form_template)
-                        : null)
+                    ->action(function (Service $record) {
+                        if (blank($record->form_template) || ! Storage::disk('public')->exists($record->form_template)) {
+                            Notification::make()
+                                ->title('Berkas tidak ditemukan di disk')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        return Storage::disk('public')->download($record->form_template);
+                    })
                     ->disabled(fn (Service $record): bool => blank($record->form_template) || ! Storage::disk('public')->exists($record->form_template))
-                    ->openUrlInNewTab()
                     ->tooltip('Unduh template formulir PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

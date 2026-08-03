@@ -43,9 +43,14 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
+            "@php artisan filament:upgrade",
+            "@php -r \"\\$link = getcwd() . '/public/storage'; if (! is_link(\\$link) && ! file_exists(\\$link)) { symlink('../storage/app/public', \\$link); }\""
+        ],
+        "post-install-cmd": [
+            "@php scripts/patch-framework-pdo-constants.php"
         ],
         "post-update-cmd": [
+            "@php scripts/patch-framework-pdo-constants.php",
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
         "post-root-package-install": [

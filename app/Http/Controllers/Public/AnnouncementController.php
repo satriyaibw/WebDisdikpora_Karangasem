@@ -19,4 +19,11 @@ class AnnouncementController extends Controller
 
         return view('pages.pengumuman', compact('announcements'));
     }
+
+    public function download(Announcement $announcement)
+    {
+        abort_unless($announcement->status === Announcement::STATUS_PUBLISHED, 404);
+
+        return public_download_response($announcement->attachment_path);
+    }
 }

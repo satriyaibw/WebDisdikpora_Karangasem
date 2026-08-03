@@ -31,7 +31,7 @@
                         </div>
                         @if ($announcement->attachment_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($announcement->attachment_path))
                             <a
-                                href="{{ Storage::url($announcement->attachment_path) }}"
+                                href="{{ route('pengumuman.unduh-lampiran', $announcement) }}"
                                 class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700 ring-1 ring-brand-200 transition hover:bg-brand-100"
                             >
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

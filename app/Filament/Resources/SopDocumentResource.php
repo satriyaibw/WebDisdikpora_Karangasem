@@ -8,6 +8,7 @@ use App\Models\SopDocument;
 use App\Rules\ValidPdfFile;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -209,11 +210,19 @@ class SopDocumentResource extends Resource
                 Tables\Actions\Action::make('download')
                     ->label('Unduh PDF')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (SopDocument $record): ?string => filled($record->file_path) && Storage::disk('public')->exists($record->file_path)
-                        ? Storage::disk('public')->url($record->file_path)
-                        : null)
+                    ->action(function (SopDocument $record) {
+                        if (blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path)) {
+                            Notification::make()
+                                ->title('Berkas tidak ditemukan di disk')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        return Storage::disk('public')->download($record->file_path);
+                    })
                     ->disabled(fn (SopDocument $record): bool => blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path))
-                    ->openUrlInNewTab()
                     ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
