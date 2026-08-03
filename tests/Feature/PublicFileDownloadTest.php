@@ -202,8 +202,24 @@ class PublicFileDownloadTest extends TestCase
 
         $content = Storage::disk('public')->get('lampiran/sop/uji.pdf');
         $this->assertStringStartsWith('%PDF-', $content);
-        $this->assertStringContainsString('Dokumen Contoh - Digenerated dari Seeder', $content);
+        $this->assertStringContainsString('Dokumen Contoh - Generated dari Seeder', $content);
         $this->assertStringContainsString('startxref', $content);
+    }
+
+    public function test_ensure_dummy_pdf_preserves_existing_valid_small_pdf(): void
+    {
+        $valid = $this->validSmallPdf();
+
+        // Premis: PDF valid minimal ukurannya di bawah ambang healing.
+        $this->assertLessThan(500, strlen($valid));
+
+        $trait = $this->dummyPdfTrait();
+        Storage::disk('public')->put('lampiran/sop/valid-kecil.pdf', $valid);
+
+        $size = $trait->make('lampiran/sop/valid-kecil.pdf');
+
+        $this->assertSame(strlen($valid), $size);
+        $this->assertSame($valid, Storage::disk('public')->get('lampiran/sop/valid-kecil.pdf'));
     }
 
     public function test_ensure_dummy_pdf_replaces_corrupt_legacy_file(): void
@@ -237,5 +253,35 @@ class PublicFileDownloadTest extends TestCase
                 return $this->ensureDummyPdf($path);
             }
         };
+    }
+
+    /**
+     * PDF valid minimal (< 500 byte) berisi `startxref` — pola yang sama
+     * dengan berkas kecil sah yang bisa diunggah admin ke path seeder.
+     */
+    private function validSmallPdf(): string
+    {
+        $objects = [
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj",
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj",
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>\nendobj",
+        ];
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [];
+
+        foreach ($objects as $object) {
+            $offsets[] = strlen($pdf);
+            $pdf .= $object."\n";
+        }
+
+        $xrefOffset = strlen($pdf);
+        $pdf .= "xref\n0 4\n0000000000 65535 f \n";
+        foreach ($offsets as $offset) {
+            $pdf .= sprintf("%010d 00000 n \n", $offset);
+        }
+        $pdf .= "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF\n";
+
+        return $pdf;
     }
 }

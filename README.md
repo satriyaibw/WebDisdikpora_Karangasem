@@ -197,6 +197,7 @@ Commit convention: `type: deskripsi singkat` (contoh: `feat: ...`, `fix: ...`, `
 - Konfigurasi rahasia HANYA disimpan di `.env` lokal, tidak pernah dikomit.
 - Port `3306` (MySQL) dan `6379` (Redis) hanya dipublikasikan ke `127.0.0.1` (loopback) untuk keperluan tooling lokal.
 - `php artisan storage:link` otomatis dieksekusi saat `composer install`/`composer update` (script `post-autoload-dump` di `composer.json`, idempotent — tidak menimpa symlink/folder yang sudah ada). `public/storage` dan `storage/app/public` di-gitignore sehingga aman di semua environment.
+- `scripts/patch-framework-pdo-constants.php` (dijalankan saat `composer install`/`composer update`) mem-patch `vendor/laravel/framework/config/database.php` agar tidak memicu deprecation `PDO::MYSQL_ATTR_SSL_CA` di PHP 8.5 — fix ini hanya tersedia di Laravel ≥ 12.40. Idempotent (no-op bila sudah ter-patch atau versi framework sudah memuat fix).
 - Seeder membuat PDF contoh valid (bukan string PDF kosong), sehingga pratinjau data hasil seeding tampil normal.
 
 ## Catatan Keamanan

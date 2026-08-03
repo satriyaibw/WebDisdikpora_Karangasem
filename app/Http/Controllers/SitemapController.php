@@ -7,7 +7,7 @@ use App\Models\News;
 use App\Models\Service;
 use App\Models\SopDocument;
 use App\Support\PublicCache;
-use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 
 /**
  * Menghasilkan `sitemap.xml` dinamis (Fase 7.3).
@@ -48,7 +48,7 @@ class SitemapController extends Controller
     /**
      * URL statis portal publik.
      *
-     * @return array<int, array{loc: string, lastmod?: \Carbon\Carbon}>
+     * @return array<int, array{loc: string, lastmod?: Carbon}>
      */
     private function staticUrls(): array
     {
@@ -61,7 +61,7 @@ class SitemapController extends Controller
     /**
      * URL berita yang terbit.
      *
-     * @return array<int, array{loc: string, lastmod: \Carbon\Carbon}>
+     * @return array<int, array{loc: string, lastmod: Carbon}>
      */
     private function newsUrls(): array
     {
@@ -79,7 +79,7 @@ class SitemapController extends Controller
     /**
      * URL layanan yang terbit.
      *
-     * @return array<int, array{loc: string, lastmod: \Carbon\Carbon}>
+     * @return array<int, array{loc: string, lastmod: Carbon}>
      */
     private function serviceUrls(): array
     {
@@ -98,7 +98,7 @@ class SitemapController extends Controller
     /**
      * URL dokumen SOP yang terbit.
      *
-     * @return array<int, array{loc: string, lastmod: \Carbon\Carbon}>
+     * @return array<int, array{loc: string, lastmod: Carbon}>
      */
     private function sopUrls(): array
     {
@@ -117,7 +117,7 @@ class SitemapController extends Controller
     /**
      * URL galeri album.
      *
-     * @return array<int, array{loc: string, lastmod: \Carbon\Carbon}>
+     * @return array<int, array{loc: string, lastmod: Carbon}>
      */
     private function albumUrls(): array
     {

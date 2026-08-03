@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Storage;
  * seeding tampil normal. Offset tabel `xref` dihitung saat runtime
  * agar berkas selalu valid secara struktural.
  *
- * Idempotent — berkas hanya ditulis bila belum ada atau lebih kecil
- * dari PDF valid terbaru (healing berkas lama yang korup).
+ * Idempotent — berkas hanya ditulis bila belum ada, atau bila yang ada
+ * adalah PDF korup warisan (kecil dan tanpa tabel `startxref`). PDF
+ * kecil yang valid TIDAK pernah ditimpa (healing tanpa data loss).
  */
 trait SeedsDummyPdfs
 {
@@ -30,13 +31,27 @@ trait SeedsDummyPdfs
     {
         $disk = Storage::disk('public');
 
-        if ($disk->exists($path) && $disk->size($path) >= self::MIN_VALID_DUMMY_PDF_SIZE) {
-            return $disk->size($path) ?? 0;
+        if ($disk->exists($path)) {
+            $size = $disk->size($path);
+
+            if ($size !== false && $size >= self::MIN_VALID_DUMMY_PDF_SIZE) {
+                return $size;
+            }
+
+            $content = $disk->get($path);
+
+            // PDF valid (termasuk yang kecil, mis. upload admin) selalu
+            // memuat `startxref`; dummy korup warisan tidak. Jangan timpa.
+            if (is_string($content) && str_contains($content, 'startxref')) {
+                return is_int($size) ? $size : 0;
+            }
         }
 
         $disk->put($path, $this->buildDummyPdf());
 
-        return $disk->size($path) ?? 0;
+        $size = $disk->size($path);
+
+        return is_int($size) ? $size : 0;
     }
 
     /**
@@ -45,7 +60,7 @@ trait SeedsDummyPdfs
      */
     private function buildDummyPdf(): string
     {
-        $text = 'Dokumen Contoh - Digenerated dari Seeder';
+        $text = 'Dokumen Contoh - Generated dari Seeder';
         $stream = "BT\n/F1 14 Tf\n72 720 Td\n($text) Tj\nET";
 
         $objects = [

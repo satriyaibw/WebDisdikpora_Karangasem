@@ -8,6 +8,7 @@ use App\Models\DownloadFile;
 use App\Rules\ValidPdfFile;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -188,7 +189,18 @@ class DownloadFileResource extends Resource
                 Tables\Actions\Action::make('download')
                     ->label('Unduh PDF')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->action(fn (DownloadFile $record) => Storage::disk('public')->download($record->file_path))
+                    ->action(function (DownloadFile $record) {
+                        if (blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path)) {
+                            Notification::make()
+                                ->title('Berkas tidak ditemukan di disk')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        return Storage::disk('public')->download($record->file_path);
+                    })
                     ->disabled(fn (DownloadFile $record): bool => blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path))
                     ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
