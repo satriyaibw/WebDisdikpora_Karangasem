@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Resources\CategoryResource;
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use App\Filament\Resources\CategoryResource\Pages\EditCategory;
+use App\Filament\Resources\CategoryResource\Pages\ListCategories;
 use App\Models\Category;
 use App\Models\User;
+use Filament\Tables\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -48,12 +50,10 @@ class CategoryResourceTest extends TestCase
         ]);
     }
 
-    public function test_category_name_and_slug_are_required_and_unique(): void
+    public function test_category_name_and_slug_are_required(): void
     {
         $admin = $this->getSeededAdmin();
         $this->actingAs($admin);
-
-        $existing = Category::firstOrFail();
 
         Livewire::test(CreateCategory::class)
             ->fillForm([
@@ -62,6 +62,14 @@ class CategoryResourceTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['name' => 'required', 'slug' => 'required']);
+    }
+
+    public function test_category_slug_duplicate_is_rejected(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $existing = Category::firstOrFail();
 
         Livewire::test(CreateCategory::class)
             ->fillForm([
@@ -105,7 +113,9 @@ class CategoryResourceTest extends TestCase
             'slug' => 'kategori-sementara',
         ]);
 
-        $category->delete();
+        Livewire::test(ListCategories::class)
+            ->callTableAction(DeleteAction::class, $category)
+            ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseMissing('categories', ['id' => $category->id]);
 
@@ -138,6 +148,7 @@ class CategoryResourceTest extends TestCase
 
         $this->assertFalse(CategoryResource::canViewAny());
         $this->assertFalse(CategoryResource::canCreate());
+        $this->assertFalse(CategoryResource::canEdit(Category::first()));
         $this->assertFalse(CategoryResource::canDelete(Category::first()));
 
         $this->get('/admin/categories')->assertForbidden();

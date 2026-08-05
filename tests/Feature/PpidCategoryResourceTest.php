@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Resources\PpidCategoryResource;
 use App\Filament\Resources\PpidCategoryResource\Pages\CreatePpidCategory;
 use App\Filament\Resources\PpidCategoryResource\Pages\EditPpidCategory;
+use App\Filament\Resources\PpidCategoryResource\Pages\ListPpidCategories;
 use App\Models\PpidCategory;
 use App\Models\User;
+use Filament\Tables\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -48,12 +50,10 @@ class PpidCategoryResourceTest extends TestCase
         ]);
     }
 
-    public function test_ppid_category_name_and_slug_are_required_and_unique(): void
+    public function test_ppid_category_name_and_slug_are_required(): void
     {
         $admin = $this->getSeededAdmin();
         $this->actingAs($admin);
-
-        $existing = PpidCategory::firstOrFail();
 
         Livewire::test(CreatePpidCategory::class)
             ->fillForm([
@@ -62,6 +62,14 @@ class PpidCategoryResourceTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['name' => 'required', 'slug' => 'required']);
+    }
+
+    public function test_ppid_category_slug_duplicate_is_rejected(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $existing = PpidCategory::firstOrFail();
 
         Livewire::test(CreatePpidCategory::class)
             ->fillForm([
@@ -135,7 +143,9 @@ class PpidCategoryResourceTest extends TestCase
             'slug' => 'kategori-sementara-ppid',
         ]);
 
-        $category->delete();
+        Livewire::test(ListPpidCategories::class)
+            ->callTableAction(DeleteAction::class, $category)
+            ->assertHasNoTableActionErrors();
 
         $this->assertDatabaseMissing('ppid_categories', ['id' => $category->id]);
 
@@ -168,6 +178,7 @@ class PpidCategoryResourceTest extends TestCase
 
         $this->assertFalse(PpidCategoryResource::canViewAny());
         $this->assertFalse(PpidCategoryResource::canCreate());
+        $this->assertFalse(PpidCategoryResource::canEdit(PpidCategory::first()));
         $this->assertFalse(PpidCategoryResource::canDelete(PpidCategory::first()));
 
         $this->get('/admin/ppid-categories')->assertForbidden();

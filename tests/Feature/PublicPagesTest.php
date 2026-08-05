@@ -610,24 +610,23 @@ class PublicPagesTest extends TestCase
     {
         foreach (range(1, 11) as $i) {
             SopDocument::create([
-                'title' => "SOP Uji Paginasi {$i}",
-                'slug' => "sop-uji-paginasi-{$i}",
-                'sop_number' => "SOP/{$i}",
+                'title' => sprintf('SOP Uji Paginasi %02d', $i),
+                'slug' => sprintf('sop-uji-paginasi-%02d', $i),
+                'sop_number' => sprintf('SOP/%02d', $i),
                 'issuance_date' => today(),
-                'file_path' => "sop/uji-{$i}.pdf",
+                'file_path' => sprintf('sop/uji-%02d.pdf', $i),
                 'status' => SopDocument::STATUS_PUBLISHED,
             ]);
         }
 
-        $this->get(route('sop.index'))
+        Livewire::test(SopCatalog::class)
             ->assertOk()
-            ->assertSee('SOP Uji Paginasi 1')
-            ->assertDontSee('SOP Uji Paginasi 6');
-
-        $this->get(route('sop.index').'?page=2')
+            ->assertSee('SOP Uji Paginasi 01')
+            ->assertDontSee('SOP Uji Paginasi 11')
+            ->call('setPage', 2)
             ->assertOk()
-            ->assertSee('SOP Uji Paginasi 6')
-            ->assertDontSee('SOP Uji Paginasi 1');
+            ->assertSee('SOP Uji Paginasi 11')
+            ->assertDontSee('SOP Uji Paginasi 01');
     }
 
     public function test_sop_catalog_filters_by_bidang(): void

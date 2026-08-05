@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\InfographicResource;
 use App\Filament\Resources\InfographicResource\Pages\CreateInfographic;
+use App\Filament\Resources\InfographicResource\Pages\ListInfographics;
 use App\Models\Infographic;
 use App\Models\User;
+use Filament\Tables\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -112,9 +114,13 @@ class InfographicResourceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $infographic->delete();
+        Livewire::test(ListInfographics::class)
+            ->callTableAction(DeleteAction::class, $infographic)
+            ->assertHasNoTableActionErrors();
 
         $this->assertFalse(Storage::disk('public')->exists($path));
+
+        $this->assertDatabaseMissing('infographics', ['id' => $infographic->id]);
 
         $this->assertDatabaseHas('audit_logs', [
             'model_type' => Infographic::class,
@@ -145,6 +151,7 @@ class InfographicResourceTest extends TestCase
 
         $this->assertFalse(InfographicResource::canViewAny());
         $this->assertFalse(InfographicResource::canCreate());
+        $this->assertFalse(InfographicResource::canEdit(new Infographic));
         $this->assertFalse(InfographicResource::canDelete(new Infographic));
 
         $this->get('/admin/infographics')->assertForbidden();
