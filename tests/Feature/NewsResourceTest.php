@@ -57,6 +57,34 @@ class NewsResourceTest extends TestCase
         ]);
     }
 
+    public function test_news_slug_duplicate_is_rejected(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $category = Category::where('slug', 'pendidikan')->firstOrFail();
+        $this->actingAs($admin);
+
+        $existing = News::create([
+            'title' => 'Berita Eksisting',
+            'slug' => 'berita-eksisting',
+            'content' => '<p>Isi</p>',
+            'author_id' => $admin->id,
+            'status' => News::STATUS_DRAFT,
+        ]);
+
+        Livewire::test(CreateNews::class)
+            ->fillForm([
+                'title' => 'Berita Duplikat',
+                'slug' => $existing->slug,
+                'content' => '<p>Isi</p>',
+                'excerpt' => 'Ringkasan',
+                'category_id' => $category->id,
+                'author_id' => $admin->id,
+                'status' => News::STATUS_DRAFT,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'unique']);
+    }
+
     public function test_published_news_with_future_published_at_is_saved_as_scheduled(): void
     {
         $admin = $this->getSeededAdmin();

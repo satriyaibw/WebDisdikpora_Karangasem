@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Livewire\Public\PpidTabs;
+use App\Livewire\Public\ServiceCatalog;
+use App\Livewire\Public\SopCatalog;
 use App\Models\Agenda;
 use App\Models\Album;
 use App\Models\AlbumPhoto;
 use App\Models\Announcement;
+use App\Models\Bidang;
 use App\Models\DownloadCategory;
 use App\Models\DownloadFile;
 use App\Models\Infographic;
@@ -17,6 +20,7 @@ use App\Models\ProfileSection;
 use App\Models\RelatedLink;
 use App\Models\Service;
 use App\Models\Slider;
+use App\Models\SopDocument;
 use App\Models\Video;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -599,5 +603,141 @@ class PublicPagesTest extends TestCase
 
         $this->assertTrue(strpos($html, 'SP4N-LAPOR!') < strpos($html, 'Portal Kabupaten'));
         $this->assertTrue(strpos($html, 'Portal Kabupaten') < strpos($html, 'JDIH Karangasem'));
+    }
+
+    /** ============================= Katalog SOP ============================= */
+    public function test_sop_catalog_paginates_at_ten_per_page(): void
+    {
+        foreach (range(1, 11) as $i) {
+            SopDocument::create([
+                'title' => "SOP Uji Paginasi {$i}",
+                'slug' => "sop-uji-paginasi-{$i}",
+                'sop_number' => "SOP/{$i}",
+                'issuance_date' => today(),
+                'file_path' => "sop/uji-{$i}.pdf",
+                'status' => SopDocument::STATUS_PUBLISHED,
+            ]);
+        }
+
+        $this->get(route('sop.index'))
+            ->assertOk()
+            ->assertSee('SOP Uji Paginasi 1')
+            ->assertDontSee('SOP Uji Paginasi 6');
+
+        $this->get(route('sop.index').'?page=2')
+            ->assertOk()
+            ->assertSee('SOP Uji Paginasi 6')
+            ->assertDontSee('SOP Uji Paginasi 1');
+    }
+
+    public function test_sop_catalog_filters_by_bidang(): void
+    {
+        $bidangA = Bidang::create(['name' => 'Bidang Uji A', 'slug' => 'bidang-uji-a']);
+        $bidangB = Bidang::create(['name' => 'Bidang Uji B', 'slug' => 'bidang-uji-b']);
+
+        SopDocument::create([
+            'title' => 'SOP Bidang A',
+            'slug' => 'sop-bidang-a',
+            'sop_number' => 'SOP/A',
+            'issuance_date' => today(),
+            'file_path' => 'sop/a.pdf',
+            'bidang_id' => $bidangA->id,
+            'status' => SopDocument::STATUS_PUBLISHED,
+        ]);
+        SopDocument::create([
+            'title' => 'SOP Bidang B',
+            'slug' => 'sop-bidang-b',
+            'sop_number' => 'SOP/B',
+            'issuance_date' => today(),
+            'file_path' => 'sop/b.pdf',
+            'bidang_id' => $bidangB->id,
+            'status' => SopDocument::STATUS_PUBLISHED,
+        ]);
+
+        Livewire::test(SopCatalog::class)
+            ->call('setBidang', $bidangA->id)
+            ->assertOk()
+            ->assertSee('SOP Bidang A')
+            ->assertDontSee('SOP Bidang B');
+    }
+
+    public function test_sop_catalog_searches_by_title_or_sop_number(): void
+    {
+        SopDocument::create([
+            'title' => 'SOP Pelayanan Perizinan',
+            'slug' => 'sop-perizinan',
+            'sop_number' => 'SOP/2025/042',
+            'issuance_date' => today(),
+            'file_path' => 'sop/perizinan.pdf',
+            'status' => SopDocument::STATUS_PUBLISHED,
+        ]);
+        SopDocument::create([
+            'title' => 'SOP Rekrutmen',
+            'slug' => 'sop-rekrutmen',
+            'sop_number' => 'SOP/2025/010',
+            'issuance_date' => today(),
+            'file_path' => 'sop/rekrutmen.pdf',
+            'status' => SopDocument::STATUS_PUBLISHED,
+        ]);
+
+        Livewire::test(SopCatalog::class)
+            ->set('search', 'perizinan')
+            ->assertOk()
+            ->assertSee('SOP Pelayanan Perizinan')
+            ->assertDontSee('SOP Rekrutmen');
+
+        Livewire::test(SopCatalog::class)
+            ->set('search', 'SOP/2025/010')
+            ->assertOk()
+            ->assertSee('SOP Rekrutmen')
+            ->assertDontSee('SOP Pelayanan Perizinan');
+    }
+
+    /** ============================= Katalog Layanan ============================= */
+    public function test_service_catalog_filters_by_bidang(): void
+    {
+        $bidangA = Bidang::create(['name' => 'Bidang Layanan A', 'slug' => 'bidang-layanan-a']);
+        $bidangB = Bidang::create(['name' => 'Bidang Layanan B', 'slug' => 'bidang-layanan-b']);
+
+        Service::create([
+            'name' => 'Layanan Bidang A',
+            'slug' => 'layanan-bidang-a',
+            'bidang_id' => $bidangA->id,
+            'status' => Service::STATUS_PUBLISHED,
+        ]);
+        Service::create([
+            'name' => 'Layanan Bidang B',
+            'slug' => 'layanan-bidang-b',
+            'bidang_id' => $bidangB->id,
+            'status' => Service::STATUS_PUBLISHED,
+        ]);
+
+        Livewire::test(ServiceCatalog::class)
+            ->call('setBidang', $bidangA->id)
+            ->assertOk()
+            ->assertSee('Layanan Bidang A')
+            ->assertDontSee('Layanan Bidang B');
+    }
+
+    public function test_service_catalog_searches_by_keyword(): void
+    {
+        Service::create([
+            'name' => 'Surat Keterangan Aktif',
+            'slug' => 'sk-aktif-khusus-uji',
+            'short_description' => 'Keterangan aktif belajar',
+            'status' => Service::STATUS_PUBLISHED,
+        ]);
+        Service::create([
+            'name' => 'Legalisir Ijazah Khusus Uji',
+            'slug' => 'legalisir-ijazah-khusus-uji',
+            'short_description' => 'Pengesahan salinan ijazah',
+            'status' => Service::STATUS_PUBLISHED,
+        ]);
+
+        Livewire::test(ServiceCatalog::class)
+            ->set('search', 'keterangan')
+            ->assertOk()
+            ->assertSee('Surat Keterangan Aktif')
+            ->assertDontSee('Legalisir Ijazah Khusus Uji');
     }
 }

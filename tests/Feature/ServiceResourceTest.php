@@ -83,6 +83,23 @@ class ServiceResourceTest extends TestCase
             ->assertHasFormErrors(['name' => 'required', 'slug' => 'required']);
     }
 
+    public function test_service_slug_duplicate_is_rejected(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        $existing = Service::firstOrFail();
+
+        Livewire::test(CreateService::class)
+            ->fillForm([
+                'name' => 'Layanan Duplikat',
+                'slug' => $existing->slug,
+                'status' => Service::STATUS_DRAFT,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['slug' => 'unique']);
+    }
+
     public function test_service_accepts_valid_pdf_template_and_persists_file_size(): void
     {
         $admin = $this->getSeededAdmin();
