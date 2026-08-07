@@ -46,7 +46,7 @@
 <body class="bg-slate-50 font-sans text-slate-800 antialiased">
     <x-public-header />
 
-    <main class="min-h-screen">
+    <main class="min-h-screen pb-14">
         @yield('content')
     </main>
 
