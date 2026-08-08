@@ -72,8 +72,11 @@
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h2 class="text-base font-bold text-slate-900">Lokasi Kantor</h2>
                 </div>
+                @php
+                    $mapAddress = urlencode(settings('site.address', 'Dinas Pendidikan, Kepemudaan dan Olahraga Kabupaten Karangasem'));
+                @endphp
                 <iframe
-                    src="https://www.google.com/maps?q={{ urlencode(settings('site.address', 'Amlapura, Karangasem, Bali')) }}&output=embed"
+                    src="https://www.google.com/maps?q={{ $mapAddress }}&output=embed"
                     title="Peta lokasi {{ settings('site.name', '') }}"
                     allowfullscreen
                     loading="lazy"
