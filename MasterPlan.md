@@ -95,6 +95,11 @@ Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** un
     - `Admin Layanan Publik` (Kelola katalog layanan & formulir).
 - [ ] **2.3 Audit Logs & Activity Tracking**
   - Pencatatan otomatis aktivitas admin (*Create, Update, Delete*) untuk keamanan data.
+- [x] **2.4 Mekanisme Lupa Password Panel Admin (*Issue #22*)**
+  - Alur reset kata sandi via email (Filament `passwordReset()` + Password broker Laravel, tautan sekali pakai kedaluwarsa 60 menit).
+  - Anti-spam: rate limit 5 permintaan/menit per alamat IP dan per email pada halaman permintaan, pesan "Terlalu banyak percobaan".
+  - Anti-enumeration: pesan sukses seragam untuk email terdaftar maupun tidak.
+  - Seluruh antarmuka & email Bahasa Indonesia; prasyarat produksi: SMTP + TLS + `MAIL_FROM_ADDRESS` resmi.
 
 ---
 
