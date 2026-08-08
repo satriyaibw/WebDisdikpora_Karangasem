@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\PasswordReset\RequestPasswordReset;
+use App\Filament\Pages\Auth\PasswordReset\ResetPassword;
 use App\Http\Middleware\SecurityHeaders;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -29,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
             ->brandName('Disdikpora Karangasem')
             ->brandLogo(asset('images/disdikpora-logo.svg'))
             ->brandLogoHeight('2.25rem')

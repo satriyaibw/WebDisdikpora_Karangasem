@@ -189,6 +189,26 @@ Commit convention: `type: deskripsi singkat` (contoh: `feat: ...`, `fix: ...`, `
 - Password: nilai `ADMIN_INITIAL_PASSWORD` pada `.env` (ubah sebelum deployment produksi)
 - Jika `ADMIN_INITIAL_PASSWORD` tidak diset, seeder membuat password acak dan mencetaknya ke output terminal saat user admin baru pertama kali dibuat.
 
+## Lupa Password (Reset Kata Sandi Panel Admin)
+
+Panel admin menyediakan alur reset kata sandi via email (fitur bawaan Laravel Password broker + Filament, disesuaikan di `app/Filament/Pages/Auth/PasswordReset/`):
+
+- **Alur:** halaman login → "Lupa kata sandi?" → masukkan email → tautan sekali pakai dikirim via email → set kata sandi baru → otomatis diarahkan kembali ke halaman login.
+- **Anti-enum:** sistem selalu menampilkan pesan sukses yang sama baik email terdaftar maupun tidak; email reset hanya dikirim ke user yang aktif dan memiliki permission `panel.access`.
+- **Rate limiting:** maksimal **5 permintaan/menit per alamat IP dan per email** pada halaman permintaan reset, dan 5 permintaan/menit per IP pada halaman set password baru. Permintaan berlebih ditolak dengan peringatan "Terlalu banyak percobaan".
+- **Masa berlaku tautan:** konfigurasi default Laravel — 60 menit (`config/auth.php` → `expire`), token sekali pakai (tidak dapat dipakai ulang).
+- Seluruh label, pesan, notifikasi, dan email berbahasa Indonesia (`lang/id/passwords.php` + `lang/id.json`; `APP_LOCALE=id`).
+
+### Prasyarat produksi (bukan bagian kode)
+
+Pengiriman email reset **tidak akan berfungsi** dengan `MAIL_MAILER=log`. Sebelum go-live:
+
+1. `MAIL_MAILER=smtp` dengan relay SMTP + TLS (mis. SMTP Gmail/Zoho/mail server dinas).
+2. `MAIL_FROM_ADDRESS` menggunakan alamat resmi (mis. `admin@pendidikan.karangasemkab.go.id`) dan domain terverifikasi agar tidak masuk spam.
+3. Uji alur lengkap di staging (kirim tautan → buka email → ubah kata sandi → login).
+
+Di development, email dapat dilihat di **Mailpit UI** (`http://localhost:8025`) atau di file log bila `MAIL_MAILER=log`.
+
 ## Catatan Implementasi
 
 - Seluruh environment diset timezone **WITA** (`Asia/Makassar`).
