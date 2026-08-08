@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ConfigureTrustedProxies;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,9 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->trustProxies(at: [
-            '172.18.0.0/16',
-        ]);
+        // Trusted proxies dikonfigurasi per-request (env & config sudah dimuat
+        // saat middleware berjalan) dari config/proxy.php — lihat .env.example.
+        // Hanya X-Forwarded-For & X-Forwarded-Proto yang dipercaya;
+        // Host/Port/Prefix dari proxy diabaikan (cegah spoofing host).
+        $middleware->append(ConfigureTrustedProxies::class);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

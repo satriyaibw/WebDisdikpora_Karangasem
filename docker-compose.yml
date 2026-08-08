@@ -149,3 +149,9 @@ networks:
   disdikpora:
     name: disdikpora-network
     driver: bridge
+    # Subnet dipatok agar selaras dengan TRUSTED_PROXIES (config/proxy.php).
+    # Catatan: perubahan subnet memerlukan `docker compose down` lalu `up`
+    # (jaringan lama tidak bisa diubah saat masih dipakai container).
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
