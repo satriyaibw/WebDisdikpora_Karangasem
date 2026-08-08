@@ -11,7 +11,7 @@ Website resmi **Dinas Pendidikan, Kepemudaan dan Olahraga Kabupaten Karangasem**
 | Frontend | Blade + Livewire 3 + Tailwind CSS |
 | Database | MySQL 8.4 LTS (Docker) / MySQL 8.x atau MariaDB (native, kompatibel) |
 | Cache & Queue | Redis 7 (Docker, dengan password) / Redis atau Valkey (native) |
-| Mail | Mailpit (Docker) / `MAIL_MAILER=log` (native) |
+| Mail | SMTP Gmail (default — email reset kata sandi ke email asli) / Mailpit & `MAIL_MAILER=log` (dev) |
 | Environment | Docker & Docker Compose — atau instalasi native langsung (lihat bagian Setup Lokal) |
 
 ## Prasyarat
@@ -74,7 +74,7 @@ docker compose exec app php artisan storage:link
 Setelah selesai, akses:
 
 - **Website:** http://localhost
-- **Mailpit UI:** http://localhost:8025
+- **Mailpit UI (hanya bila `MAIL_HOST=mailpit` untuk dev):** http://localhost:8025
 
 ## Setup Lokal (Native / Tanpa Docker)
 
@@ -98,7 +98,8 @@ cp .env.example .env
 #    DB_HOST=127.0.0.1                 # bukan "db" (nama service Docker)
 #    REDIS_HOST=127.0.0.1              # bukan "redis"
 #    REDIS_PASSWORD=null               # bila Redis/Valkey lokal tanpa password
-#    MAIL_MAILER=log                   # tanpa Mailpit — email ditulis ke log
+#    MAIL_PASSWORD=<App Password Gmail> # wajib diisi; default .env.example = SMTP Gmail
+#    MAIL_MAILER=log                   # bila tak ada SMTP — email ditulis ke log, tidak dikirim
 #    CACHE_STORE=file                  # HANYA bila phpredis 6.x memicu error
 #                                      # "Cannot use bool as array" (lihat Troubleshooting)
 
@@ -134,7 +135,7 @@ php artisan schedule:work                          # scheduler (cron pengganti)
 | URL situs/berkas mengarah ke port 80 saat memakai `php artisan serve` | `APP_URL=http://localhost` (benar hanya untuk nginx Docker di port 80) | Set `APP_URL=http://127.0.0.1:8000` di `.env` lalu `php artisan optimize:clear` |
 | `ErrorException: Cannot use bool as array` di `RedisTagSet` saat cache Redis | phpredis 6.x tidak kompatibel dengan operasi cache bertag Laravel 11 (mis. `PublicCache` flush saat seeding) | Set `CACHE_STORE=file` di `.env`. Session/queue via Redis tetap aman — hanya cache bertag yang bermasalah |
 | Koneksi database gagal di native | `DB_HOST=db` (nama service Docker) tidak dikenal di host | Set `DB_HOST=127.0.0.1` (sesuaikan user/password dengan database yang dibuat) |
-| Email tidak terkirim / Mailpit tidak ada di native | `.env` masih `MAIL_MAILER=smtp` + `MAIL_HOST=mailpit` | Set `MAIL_MAILER=log` (atau konfigurasi SMTP sendiri) |
+| Email tidak terkirim (dev) | `MAIL_PASSWORD` belum diisi, atau `MAIL_HOST=mailpit` dipakai di luar Docker | Isi Google App Password di `MAIL_PASSWORD` lalu `docker compose restart app queue-worker`; atau untuk dev tanpa akun Gmail gunakan `MAIL_MAILER=log` / `MAIL_HOST=mailpit` |
 | `public/storage` terlanjur ada sebagai folder (bukan symlink) | Dibuat manual tanpa `storage:link` | Hapus folder kosong tersebut (JANGAN hapus `storage/app/public`), lalu `php artisan storage:link` |
 | Halaman beranda blank/cache basi setelah update kode | Cache aplikasi lama | `php artisan optimize:clear` (+ `optimize` bila produksi) |
 
@@ -199,15 +200,16 @@ Panel admin menyediakan alur reset kata sandi via email (fitur bawaan Laravel Pa
 - **Masa berlaku tautan:** konfigurasi default Laravel — 60 menit (`config/auth.php` → `expire`), token sekali pakai (tidak dapat dipakai ulang).
 - Seluruh label, pesan, notifikasi, dan email berbahasa Indonesia (`lang/id/passwords.php` + `lang/id.json`; `APP_LOCALE=id`).
 
-### Prasyarat produksi (bukan bagian kode)
+### Prasyarat email reset (bukan bagian kode)
 
-Pengiriman email reset **tidak akan berfungsi** dengan `MAIL_MAILER=log`. Sebelum go-live:
+Konfigurasi default repo (`.env.example`) sudah mengarah ke **SMTP Gmail** (`smtp.gmail.com:587`, STARTTLS) dengan pengirim `disdikkarangasem@gmail.com`, sehingga email reset langsung masuk ke email asli. Yang perlu disiapkan operator:
 
-1. `MAIL_MAILER=smtp` dengan relay SMTP + TLS (mis. SMTP Gmail/Zoho/mail server dinas).
-2. `MAIL_FROM_ADDRESS` menggunakan alamat resmi (mis. `admin@pendidikan.karangasemkab.go.id`) dan domain terverifikasi agar tidak masuk spam.
-3. Uji alur lengkap di staging (kirim tautan → buka email → ubah kata sandi → login).
+1. **Google App Password** — aktifkan 2-Step Verification di akun Gmail pengirim, buat App Password di https://myaccount.google.com/apppasswords, lalu isi di `MAIL_PASSWORD` di `.env` (nilai ini TIDAK boleh dikommit; `.env` sudah di-gitignore).
+2. **Restart setelah mengubah `.env`** — container `app` & `queue-worker` memuat konfigurasi ke memori saat boot; jalankan `docker compose restart app queue-worker` agar email reset memakai SMTP baru.
+3. **Deliverability produksi resmi** — otorisasi domain (SPF/DKIM) tetap disarankan bila memakai domain dinas: gunakan relay SMTP dinas/Workspace sebagai `MAIL_FROM_ADDRESS` resmi (mis. `admin@pendidikan.karangasemkab.go.id`). `MAIL_SCHEME` hanya menerima `null`/`smtp`/`smtps` (port 465) — nilai `tls`/`ssl` menimbulkan `UnsupportedSchemeException`.
+4. Uji alur lengkap di staging (kirim tautan → buka email → ubah kata sandi → login).
 
-Di development, email dapat dilihat di **Mailpit UI** (`http://localhost:8025`) atau di file log bila `MAIL_MAILER=log`.
+Pengiriman email reset **tidak akan berfungsi** dengan `MAIL_MAILER=log`. Di development, email dapat dilihat di **Mailpit UI** (`http://localhost:8025`, bila `MAIL_HOST=mailpit`) atau di file log bila `MAIL_MAILER=log`.
 
 ## Catatan Implementasi
 
