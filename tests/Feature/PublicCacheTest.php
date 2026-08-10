@@ -138,4 +138,31 @@ class PublicCacheTest extends TestCase
 
         $this->assertTrue($this->taggedHas([PublicCache::TAG_SITEMAP], PublicCache::SITEMAP));
     }
+
+    public function test_non_taggable_store_falls_back_without_tags(): void
+    {
+        config()->set('cache.default', 'file');
+
+        $value = PublicCache::remember('fallback.uji', fn () => 'lazim', [PublicCache::TAG_HOME], 60);
+        $this->assertEquals('lazim', $value);
+
+        $this->assertTrue(Cache::has('public.fallback.uji'));
+
+        PublicCache::forget('fallback.uji', [PublicCache::TAG_HOME]);
+
+        $this->assertFalse(Cache::has('public.fallback.uji'));
+
+        config()->set('cache.default', 'array');
+    }
+
+    public function test_key_for_generates_stable_bounded_key_from_user_input(): void
+    {
+        $a = PublicCache::keyFor('sop.list', ['  Judul SOP ', 'PAGE-2', null]);
+        $b = PublicCache::keyFor('sop.list', ['judul sop', 'page-2', null]);
+
+        $this->assertEquals($a, $b);
+        $this->assertStringStartsWith('sop.list.', $a);
+        $this->assertSame(9 + 32, strlen($a));
+        $this->assertStringNotContainsString('Judul SOP', $a);
+    }
 }

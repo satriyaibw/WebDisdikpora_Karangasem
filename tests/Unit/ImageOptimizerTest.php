@@ -18,6 +18,28 @@ class ImageOptimizerTest extends TestCase
         Storage::fake('public');
     }
 
+    private const EXIF_JPEG_ORIENTATION_6 =
+        '/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAYAAAAAAAD/'.
+        '2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8f'.
+        'ExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4e'.
+        'Hh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADIAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEA'.
+        'AAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJx'.
+        'FDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNk'.
+        'ZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJ'.
+        'ytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQF'.
+        'BgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMz'.
+        'UvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3'.
+        'eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna'.
+        '4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDyyiiivzo/ssKKKKACiiigAooooAKKKKAC'.
+        'iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKK'.
+        'KKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooo'.
+        'oAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiig'.
+        'AooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAC'.
+        'iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKK'.
+        'KKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooo'.
+        'oA//2Q=='
+    ;
+
     #[Test]
     public function it_converts_uploaded_image_to_webp_on_public_disk(): void
     {
@@ -107,5 +129,25 @@ class ImageOptimizerTest extends TestCase
         $this->assertTrue(Storage::disk('public')->exists($path));
 
         @unlink($tempPath);
+    }
+
+    #[Test]
+    public function it_applies_exif_orientation_to_phone_photos(): void
+    {
+        $tempPath = tempnam(sys_get_temp_dir(), 'exif');
+        file_put_contents($tempPath, base64_decode(self::EXIF_JPEG_ORIENTATION_6));
+
+        try {
+            $file = new UploadedFile($tempPath, 'foto-hp.jpg', 'image/jpeg');
+
+            $path = ImageOptimizer::convertToWebp($file, 'berita');
+
+            [$width, $height] = getimagesize(Storage::disk('public')->path($path));
+
+            $this->assertEquals(200, $width);
+            $this->assertEquals(100, $height);
+        } finally {
+            @unlink($tempPath);
+        }
     }
 }
