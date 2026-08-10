@@ -156,6 +156,28 @@ docker compose exec app php artisan optimize
 docker compose exec app composer audit
 ```
 
+## Pengujian Otomatis (QA)
+
+Suite pengujian memakai SQLite `:memory:` (tanpa MySQL/Redis), aman dijalankan
+di container apa pun:
+
+```bash
+# Jalankan seluruh suite (Unit + Feature)
+docker compose exec app php artisan test
+
+# Jalankan subset (mis. keamanan & halaman publik)
+docker compose exec app php artisan test --filter=SecurityHeadersTest
+docker compose exec app php artisan test --filter=PublicPagesTest
+
+# Cek konsistensi gaya kode (Laravel Pint)
+docker compose exec app ./vendor/bin/pint --test
+
+# Auto-perbaiki gaya kode
+docker compose exec app ./vendor/bin/pint
+```
+
+Laporan QA fase 8.1 tersedia di `REPORT.md` (root).
+
 ## Struktur Direktori
 
 ```
