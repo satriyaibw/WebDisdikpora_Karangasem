@@ -35,8 +35,8 @@ return [
         ."img-src 'self' data: blob: https:; "
         ."font-src 'self' data:; "
         ."connect-src 'self'; "
-        .'frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.google.com https://maps.google.com; '
-        ."object-src 'none'; "
+        ."frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.google.com https://maps.google.com; "
+        ."object-src 'self'; "
         ."base-uri 'self'; "
         ."form-action 'self'; "
         ."frame-ancestors 'self'"),

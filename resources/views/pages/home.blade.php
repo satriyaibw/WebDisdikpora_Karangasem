@@ -44,7 +44,6 @@
             x-on:mouseenter="paused = true"
             x-on:mouseleave="paused = false; restart()"
             aria-label="Sorotan utama"
-            x-cloak
         >
             <div class="relative h-[420px] w-full overflow-hidden sm:h-[480px]">
                 @foreach ($sliders as $index => $slider)
@@ -99,9 +98,11 @@
                 </button>
                 <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
                     @foreach ($sliders as $index => $slider)
-                        <button type="button" class="h-2 w-2 rounded-full transition {{ $index === 0 ? 'bg-gold-500' : 'bg-white/60' }}"
-                                :class="current === {{ $index }} ? 'bg-gold-500' : 'bg-white/60'"
-                                x-on:click="goTo({{ $index }})" aria-label="Ke slide {{ $index + 1 }}"></button>
+                        <button type="button" class="flex h-6 w-6 items-center justify-center"
+                                x-on:click="goTo({{ $index }})" aria-label="Ke slide {{ $index + 1 }}">
+                            <span class="h-2 w-2 rounded-full transition {{ $index === 0 ? 'bg-gold-500' : 'bg-white/60' }}"
+                                  :class="current === {{ $index }} ? 'bg-gold-500' : 'bg-white/60'"></span>
+                        </button>
                     @endforeach
                 </div>
             @endif
@@ -127,6 +128,7 @@
 
     {{-- Pintasan utama --}}
     <section class="relative z-10 mx-auto -mt-0 max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+        <h2 class="sr-only">Pintasan Utama</h2>
         <div class="grid gap-5 sm:grid-cols-3">
             <a href="{{ route('layanan.index') }}" class="group rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
