@@ -1,0 +1,26 @@
+{
+  "name": "qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suite QA: responsivitas, kompatibilitas browser, audit Lighthouse, dan seed/probe konten admin",
+  "scripts": {
+    "seed-admin-content": "node seed-admin-content.mjs",
+    "probe-admin": "node probe-admin.mjs",
+    "responsiveness": "node responsiveness.mjs",
+    "browser-compat": "node browser-compat.mjs",
+    "lighthouse": "node lighthouse-audit.mjs",
+    "install:browsers": "playwright install chromium firefox webkit"
+  },
+  "keywords": [
+    "qa",
+    "playwright",
+    "lighthouse"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "chrome-launcher": "^1.2.1",
+    "lighthouse": "^13.4.1"
+  }
+}

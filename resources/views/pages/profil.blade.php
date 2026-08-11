@@ -40,7 +40,7 @@
             <aside class="space-y-6">
                 <div class="rounded-2xl bg-brand-500 p-7 text-white shadow-sm">
                     <h3 class="text-base font-bold">Struktur Organisasi</h3>
-                    <p class="mt-3 text-sm leading-6 text-brand-100">
+                    <p class="mt-3 text-sm leading-6 text-white">
                         Lihat bagan struktur organisasi {{ settings('site.short_name', '') }}.
                     </p>
                     <a href="{{ route('profil.struktur') }}" class="mt-4 inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-bold text-brand-700 transition hover:bg-brand-50">

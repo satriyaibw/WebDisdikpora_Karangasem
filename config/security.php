@@ -35,7 +35,9 @@ return [
         ."img-src 'self' data: blob: https:; "
         ."font-src 'self' data:; "
         ."connect-src 'self'; "
-        .'frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.google.com https://maps.google.com; '
+        // frame-src 'self': pratinjau PDF SOP di iframe same-origin (/storage/...).
+        // object-src tetap 'none' — tidak ada <object>/<embed> di aplikasi.
+        ."frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.google.com https://maps.google.com; "
         ."object-src 'none'; "
         ."base-uri 'self'; "
         ."form-action 'self'; "

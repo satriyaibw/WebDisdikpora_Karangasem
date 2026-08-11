@@ -22,7 +22,7 @@
 
     <div class="bg-white">
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-            <a href="{{ route('home') }}" class="flex items-center gap-3" aria-label="{{ settings('site.name', '') }}">
+            <a href="{{ route('home') }}" class="flex items-center gap-3">
                 <img
                     src="{{ asset('images/disdikpora-logo.svg') }}"
                     alt="Logo {{ settings('site.name', 'Disdikpora Karangasem') }}"

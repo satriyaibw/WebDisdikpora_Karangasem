@@ -8,6 +8,7 @@
     <x-page-hero title="Katalog Layanan Publik" subtitle="Layanan administrasi Disdikpora Karangasem — cari berdasarkan kata kunci atau bidang" />
 
     <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <h2 class="sr-only">Katalog Layanan</h2>
         <livewire:public.service-catalog />
     </section>
 @endsection

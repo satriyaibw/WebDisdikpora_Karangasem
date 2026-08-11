@@ -8,6 +8,7 @@
     <x-page-hero title="Berita" subtitle="Berita dan informasi terkini dari {{ settings('site.short_name', '') }}" />
 
     <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <h2 class="sr-only">Daftar Berita</h2>
         <div class="mb-8 flex flex-wrap items-center gap-3">
             <form action="{{ route('berita.index') }}" method="GET" class="flex w-full max-w-sm items-center gap-2" role="search">
                 <input
