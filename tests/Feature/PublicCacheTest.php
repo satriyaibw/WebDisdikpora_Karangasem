@@ -138,4 +138,42 @@ class PublicCacheTest extends TestCase
 
         $this->assertTrue($this->taggedHas([PublicCache::TAG_SITEMAP], PublicCache::SITEMAP));
     }
+
+    public function test_non_taggable_store_falls_back_without_tags(): void
+    {
+        config()->set('cache.default', 'file');
+
+        try {
+            $value = PublicCache::remember('fallback.uji', fn () => 'lazim', [PublicCache::TAG_HOME], 60);
+            $this->assertEquals('lazim', $value);
+
+            $this->assertTrue(Cache::has('public.fallback.uji'));
+
+            PublicCache::forget('fallback.uji', [PublicCache::TAG_HOME]);
+
+            $this->assertFalse(Cache::has('public.fallback.uji'));
+        } finally {
+            config()->set('cache.default', 'array');
+        }
+    }
+
+    public function test_key_for_generates_stable_bounded_key_from_user_input(): void
+    {
+        $prefix = 'sop.list';
+        $a = PublicCache::keyFor($prefix, ['  Judul SOP ', 'PAGE-2', null]);
+        $b = PublicCache::keyFor($prefix, ['judul sop', 'page-2', null]);
+
+        $this->assertEquals($a, $b);
+        $this->assertStringStartsWith($prefix.'.', $a);
+        $this->assertSame(strlen($prefix) + 1 + 32, strlen($a));
+        $this->assertStringNotContainsString('Judul SOP', $a);
+    }
+
+    public function test_key_for_distinguishes_parts_containing_the_separator(): void
+    {
+        $single = PublicCache::keyFor('sop.list', ['Judul|SOP']);
+        $split = PublicCache::keyFor('sop.list', ['Judul', 'SOP']);
+
+        $this->assertNotSame($single, $split);
+    }
 }

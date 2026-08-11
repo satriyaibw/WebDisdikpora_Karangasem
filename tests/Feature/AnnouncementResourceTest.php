@@ -91,6 +91,27 @@ class AnnouncementResourceTest extends TestCase
             ->assertHasFormErrors(['attachment_path']);
     }
 
+    public function test_attachment_with_fake_pdf_magic_bytes_is_rejected(): void
+    {
+        $admin = $this->getSeededAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(CreateAnnouncement::class)
+            ->fillForm([
+                'title' => 'Pengumuman PDF Palsu',
+                'content' => '<p>Isi</p>',
+                'status' => Announcement::STATUS_DRAFT,
+                'attachment_path' => UploadedFile::fake()->createWithContent(
+                    'palsu.pdf',
+                    "%PDF-1.4\n<script>alert(1)</script>" // header palsu tanpa trailer %%EOF
+                ),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['attachment_path']);
+
+        $this->assertCount(0, Storage::disk('public')->allFiles());
+    }
+
     public function test_attachment_filename_is_sanitized_against_path_traversal(): void
     {
         $name = AnnouncementResource::safeStoredFileName('../../evil.pdf');

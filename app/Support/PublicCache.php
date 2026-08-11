@@ -125,7 +125,9 @@ class PublicCache
      *
      * Input dinormalisasi (lowercase, trim, dibatasi panjangnya) agar
      * pencarian yang ekuivalen memakai satu slot cache dan tidak membuat
-     * key tak terbatas (pengisi cache) dari masukan pengguna.
+     * key tak terbatas (pengisi cache) dari masukan pengguna. Array di
+     *-enkode dengan JSON (bukan implode delimitir) agar nilai yang
+     * mengandung `|` tidak bentrok dengan pemisahan antar-part.
      */
     public static function keyFor(string $prefix, array $parts = []): string
     {
@@ -133,7 +135,7 @@ class PublicCache
             is_scalar($value) ? (string) $value : (string) json_encode($value)
         ), $parts);
 
-        return $prefix.'.'.md5(implode('|', $normalized));
+        return $prefix.'.'.md5(json_encode($normalized));
     }
 
     /**

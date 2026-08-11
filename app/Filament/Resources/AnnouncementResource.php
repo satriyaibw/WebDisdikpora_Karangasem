@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AnnouncementResource\Pages;
 use App\Models\Announcement;
+use App\Rules\ValidPdfFile;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -88,7 +89,7 @@ class AnnouncementResource extends Resource
                             ->directory('lampiran/pengumuman')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(5120)
-                            ->rules(['mimetypes:application/pdf'])
+                            ->rules(['mimetypes:application/pdf', new ValidPdfFile])
                             ->getUploadedFileNameForStorageUsing(fn (TemporaryUploadedFile $file): string => static::safeStoredFileName($file->getClientOriginalName()))
                             ->helperText('Hanya berkas PDF, maksimal 5 MB.'),
                         Forms\Components\Toggle::make('is_important')
