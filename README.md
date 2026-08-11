@@ -178,6 +178,38 @@ docker compose exec app ./vendor/bin/pint
 
 Laporan QA fase 8.1 tersedia di `REPORT.md` (root).
 
+### QA browser & audit (Playwright + Lighthouse)
+
+Skrip di `scripts/qa/` menguji responsivitas, kompatibilitas browser, dan skor
+Lighthouse terhadap aplikasi yang sedang berjalan (default `http://localhost`,
+mis. `php artisan serve` + `npm run build`).
+
+```bash
+cd scripts/qa
+npm ci
+npx playwright install chromium firefox webkit   # sekali per mesin
+npm run seed-admin-content   # opsional: seed konten demo (butuh aset, lihat QA_ASSETS_DIR)
+npm run probe-admin          # opsional: inspeksi field form admin
+npm run responsiveness        # 15 halaman × 3 viewport
+npm run browser-compat        # 15 halaman × Chromium/Firefox/WebKit
+npm run lighthouse            # skor 4 kategori untuk 8 halaman utama
+```
+
+Variabel env yang dapat dioverride:
+
+| Variabel | Default | Fungsi |
+|---|---|---|
+| `QA_BASE_URL` | `http://localhost` | Base URL aplikasi yang diuji |
+| `QA_ADMIN_EMAIL` | `admin@disdikpora.karangasemkab.go.id` | Email login admin (dev seeder) |
+| `QA_ADMIN_PASSWORD` | `Password!2026` | Password login admin (dev seeder) |
+| `QA_ASSETS_DIR` | `/tmp/opencode/assets` | Direktori aset demo untuk seed |
+| `CHROME_PATH` | otomatis (Chromium Playwright) | Executable Chrome/Chromium untuk audit Lighthouse |
+
+> Kredensial bawaan hanya untuk lingkungan pengembangan (sesuai
+> `ADMIN_INITIAL_PASSWORD` di `.env.example`). Di lingkungan non-dev selalu
+> set `QA_ADMIN_EMAIL`/`QA_ADMIN_PASSWORD`. Hasil audit ditulis ke
+> `scripts/qa/results/` (di-ignore git).
+
 ## Struktur Direktori
 
 ```

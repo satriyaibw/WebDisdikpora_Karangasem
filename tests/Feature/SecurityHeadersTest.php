@@ -34,6 +34,7 @@ class SecurityHeadersTest extends TestCase
         $this->assertNotNull($csp);
         $this->assertStringContainsString("script-src 'self' 'unsafe-inline' 'unsafe-eval'", $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
+        $this->assertStringContainsString("frame-src 'self'", $csp);
         $this->assertStringContainsString("frame-ancestors 'self'", $csp);
     }
 

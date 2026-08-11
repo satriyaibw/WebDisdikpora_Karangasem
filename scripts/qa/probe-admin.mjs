@@ -1,6 +1,10 @@
 import { chromium } from '@playwright/test';
 
-const BASE = 'http://localhost';
+const BASE = process.env.QA_BASE_URL || 'http://localhost';
+// Kredensial admin (nilai bawaan = akun dari DatabaseSeeder/dev). Selalu bisa
+// dioverride lewat env untuk lingkungan non-dev.
+const ADMIN_EMAIL = process.env.QA_ADMIN_EMAIL || 'admin@disdikpora.karangasemkab.go.id';
+const ADMIN_PASSWORD = process.env.QA_ADMIN_PASSWORD || 'Password!2026';
 const ADMIN = '/admin';
 
 async function probe(page, url, name) {
@@ -36,8 +40,8 @@ async function probe(page, url, name) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(BASE + ADMIN + '/login', { waitUntil: 'networkidle' });
-  await page.fill('[id="data.email"]', 'admin@disdikpora.karangasemkab.go.id');
-  await page.fill('[id="data.password"]', 'Password!2026');
+  await page.fill('[id="data.email"]', ADMIN_EMAIL);
+  await page.fill('[id="data.password"]', ADMIN_PASSWORD);
   await page.click('button[type=submit]');
   await page.waitForURL('**/admin*', { timeout: 15000 });
   console.log('LOGIN OK ->', page.url());

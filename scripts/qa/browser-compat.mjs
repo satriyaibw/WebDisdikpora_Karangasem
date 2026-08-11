@@ -1,10 +1,13 @@
 import { chromium, firefox, webkit } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'fs';
 
-const BASE = 'http://localhost';
+const BASE = process.env.QA_BASE_URL || 'http://localhost';
 const OUT = 'results';
 const VIEWPORT = { width: 1366, height: 768 };
 const BROWSERS = [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]];
+// Satu-satunya error konsol yang sengaja diabaikan: font CDN pihak ketiga
+// (fonts.bunny.net) yang bisa tidak terjangkau saat offline. pageerror TIDAK pernah difilter.
+const IGNORED_CONSOLE = [/fonts\.bunny\.net/];
 const PAGES = [
   ['home', '/'],
   ['profil', '/profil'],
@@ -37,7 +40,9 @@ mkdirSync(OUT, { recursive: true });
         page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 160)); });
         page.on('pageerror', (e) => errors.push('pageerror: ' + e.message.slice(0, 160)));
         const resp = await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForTimeout(700);
+        await page.waitForLoadState('load');
+        await page.waitForSelector('footer', { timeout: 15000 });
+        await page.waitForTimeout(500);
         if (resp && resp.status() === 200) { row.status = 'OK'; } else { row.issues.push(`HTTP ${resp?.status()}`); row.status = 'FAIL'; }
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         if (overflow > 0) row.issues.push(`overflow ${overflow}px`);
@@ -48,7 +53,7 @@ mkdirSync(OUT, { recursive: true });
           return bad;
         });
         row.issues.push(...missing.map((m) => 'missing ' + m));
-        const realErrors = errors.filter((e) => !e.includes('fonts.bunny.net') && !e.includes('worker from') && !e.includes('livewire'));
+        const realErrors = errors.filter((e) => !IGNORED_CONSOLE.some((re) => re.test(e)));
         row.issues.push(...realErrors.slice(0, 3).map((e) => 'js: ' + e));
         row.status = row.issues.length === 0 ? 'PASS' : 'FAIL';
         if (row.status === 'FAIL') {

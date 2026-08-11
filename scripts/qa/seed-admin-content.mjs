@@ -1,9 +1,15 @@
 import { chromium } from '@playwright/test';
+import { existsSync } from 'fs';
 
-const BASE = 'http://localhost';
-const ASSETS = '/tmp/opencode/assets';
-const ADMIN = 'admin@disdikpora.karangasemkab.go.id';
-const PASS = 'Password!2026';
+const BASE = process.env.QA_BASE_URL || 'http://localhost';
+// Direktori aset demo (slider.jpg, news1.jpg, ..., album2.jpg) untuk upload.
+const ASSETS = process.env.QA_ASSETS_DIR || '/tmp/opencode/assets';
+// Kredensial admin (nilai bawaan = akun dari DatabaseSeeder/dev). Selalu bisa
+// dioverride lewat env untuk lingkungan non-dev.
+const ADMIN = process.env.QA_ADMIN_EMAIL || 'admin@disdikpora.karangasemkab.go.id';
+const PASS = process.env.QA_ADMIN_PASSWORD || 'Password!2026';
+
+const ASSET_FILES = ['slider.jpg', 'news1.jpg', 'news2.jpg', 'lampiran.pdf', 'infografis.jpg', 'album1.jpg', 'album2.jpg'];
 
 const loc = (m) => `[id="${m}"]`;
 const SUBMIT = 'button.fi-btn[type="submit"]';
@@ -71,6 +77,13 @@ async function createResource(page, url, fields, label) {
 }
 
 (async () => {
+  const missing = ASSET_FILES.filter((f) => !existsSync(`${ASSETS}/${f}`));
+  if (missing.length > 0) {
+    console.error(`Aset demo tidak ditemukan di ${ASSETS}: ${missing.join(', ')}`);
+    console.error('Atur env QA_ASSETS_DIR ke direktori berisi file tersebut, lalu jalankan ulang.');
+    process.exit(1);
+  }
+
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(BASE + '/admin/login');
@@ -81,9 +94,11 @@ async function createResource(page, url, fields, label) {
   console.log('LOGIN OK');
 
   const now = new Date();
-  const isoDate = (d) => d.toISOString().slice(0, 10);
-  const addDay = (n) => { const d = new Date(now.getTime() + n * 86400000); return d.toISOString().slice(0, 10); };
-  const stamp = now.toISOString().slice(5, 10);
+  const pad = (n) => String(n).padStart(2, '0');
+  const localDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const localDateTime = (d) => `${localDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const addDay = (n) => { const d = new Date(now.getTime() + n * 86400000); return localDate(d); };
+  const stamp = `${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
   await createResource(page, '/admin/sliders/create', [
     { model: 'data.image', type: 'file', value: ASSETS + '/slider.jpg' },
@@ -101,7 +116,7 @@ async function createResource(page, url, fields, label) {
     { model: 'data.content', type: 'richtext', value: 'Karangasem, 10 Agustus 2026 — Dinas Pendidikan Kepemudaan dan Olahraga Kabupaten Karangasem menyelenggarakan sosialisasi Sistem Penerimaan Murid Baru (SPMB) tahun ajaran 2026-2027.' },
     { model: 'data.cover_image', type: 'file', value: ASSETS + '/news1.jpg' },
     { model: 'data.status', type: 'select', value: 'Terbit' },
-    { model: 'data.published_at', type: 'datetime', value: now.toISOString().slice(0, 16) },
+    { model: 'data.published_at', type: 'datetime', value: localDateTime(now) },
   ], 'NEWS 1');
 
   await createResource(page, '/admin/news/create', [
@@ -111,14 +126,14 @@ async function createResource(page, url, fields, label) {
     { model: 'data.content', type: 'richtext', value: 'Karangasem — Turnamen Olahraga Pelajar se-Kabupaten Karangasem resmi dibuka oleh Kepala Dinas Pendidikan Kepemudaan dan Olahraga.' },
     { model: 'data.cover_image', type: 'file', value: ASSETS + '/news2.jpg' },
     { model: 'data.status', type: 'select', value: 'Terbit' },
-    { model: 'data.published_at', type: 'datetime', value: now.toISOString().slice(0, 16) },
+    { model: 'data.published_at', type: 'datetime', value: localDateTime(now) },
   ], 'NEWS 2');
 
   await createResource(page, '/admin/announcements/create', [
     { model: 'data.title', type: 'text', value: 'Pengumuman Penerimaan Peserta Didik Baru Tahun 2026 (' + stamp + ')' },
     { model: 'data.content', type: 'richtext', value: 'Diumumkan kepada seluruh masyarakat bahwa penerimaan peserta didik baru jenjang SD dan SMP dibuka mulai tanggal 1 Juli 2026.' },
     { model: 'data.announcement_number', type: 'text', value: '800/421/DISDIKPORA' },
-    { model: 'data.announcement_date', type: 'date', value: isoDate(now) },
+    { model: 'data.announcement_date', type: 'date', value: localDate(now) },
     { model: 'data.attachment_path', type: 'file', value: ASSETS + '/lampiran.pdf' },
     { model: 'data.is_important', type: 'toggle', value: true },
     { model: 'data.status', type: 'select', value: 'Terbit' },
@@ -128,7 +143,7 @@ async function createResource(page, url, fields, label) {
     { model: 'data.title', type: 'text', value: 'Jadwal Pembagian Rapor Semester Genap (' + stamp + ')' },
     { model: 'data.content', type: 'richtext', value: 'Pembagian rapor semester genap dilaksanakan serentak di seluruh satuan pendidikan.' },
     { model: 'data.announcement_number', type: 'text', value: '800/422/DISDIKPORA' },
-    { model: 'data.announcement_date', type: 'date', value: isoDate(now) },
+    { model: 'data.announcement_date', type: 'date', value: localDate(now) },
     { model: 'data.status', type: 'select', value: 'Terbit' },
   ], 'ANNOUNCEMENT 2');
 
@@ -175,9 +190,10 @@ async function createResource(page, url, fields, label) {
   await waitSubmit(page);
   await page.locator(loc('data.title')).fill('Galeri Kegiatan SPMB 2026 (' + stamp + ')');
   await page.locator(loc('data.description')).fill('Dokumentasi sosialisasi penerimaan murid baru.');
-  await page.getByText('Tambah Foto', { exact: true }).click();
+  const addPhotoBtn = page.getByRole('button', { name: /Tambah Foto|Add item/i }).first();
+  await addPhotoBtn.click();
   await page.waitForTimeout(400);
-  await page.getByText('Tambah Foto', { exact: true }).click();
+  await addPhotoBtn.click();
   await page.waitForTimeout(400);
   await uploadFile(page, ASSETS + '/album1.jpg', 0);
   await uploadFile(page, ASSETS + '/album2.jpg', 1);

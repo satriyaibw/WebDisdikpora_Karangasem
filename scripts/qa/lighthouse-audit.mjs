@@ -1,10 +1,20 @@
 import { launch } from 'chrome-launcher';
+import { chromium as pwChromium } from '@playwright/test';
 import lh from 'lighthouse';
-import { mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
-const BASE = 'http://localhost';
+const BASE = process.env.QA_BASE_URL || 'http://localhost';
 const OUT = 'results/lighthouse';
 mkdirSync(OUT, { recursive: true });
+
+// chrome-launcher butuh executable Chrome/Chromium. Bila CHROME_PATH tidak
+// diset, pakai Chromium yang sudah di-install bersama Playwright.
+if (!process.env.CHROME_PATH) {
+  const pwPath = pwChromium.executablePath();
+  if (existsSync(pwPath)) {
+    process.env.CHROME_PATH = pwPath;
+  }
+}
 
 const PAGES = [
   ['home', '/'],
@@ -25,7 +35,6 @@ const PAGES = [
     try {
       const r = await lh(url, { port: chrome.port, output: 'json', onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'], logLevel: 'error' });
       const c = r.lhr.categories;
-      const k = (i) => (i && lh.result.reportCategories ? 0 : 0);
       rows.push({
         page: name,
         performance: Math.round(c.performance.score * 100),

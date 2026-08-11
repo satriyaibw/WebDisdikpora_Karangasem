@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'fs';
 
-const BASE = 'http://localhost';
+const BASE = process.env.QA_BASE_URL || 'http://localhost';
 const OUT = 'results';
 const VIEWPORTS = [
   { name: 'desktop', width: 1366, height: 768 },
@@ -37,8 +37,10 @@ mkdirSync(OUT, { recursive: true });
       const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
       const row = { page: name, viewport: vp.name, status: 'FAIL', issues: [] };
       try {
-        const resp = await page.goto(BASE + path, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(600);
+        const resp = await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForLoadState('load');
+        await page.waitForSelector('footer', { timeout: 15000 });
+        await page.waitForTimeout(500);
         row.status = resp && resp.status() === 200 ? 'OK' : 'FAIL';
         if (row.status !== 'OK') row.issues.push(`HTTP ${resp?.status()}`);
 
