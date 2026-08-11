@@ -11,8 +11,10 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  * Validasi berkas PDF asli (MasterPlan 4.4).
  *
  * Selain rule `mimetypes:application/pdf`, dilakukan pemeriksaan
- * magic bytes `%PDF-` pada bagian awal berkas agar file ber-ekstensi
- * PDF palsu (mis. script berbahaya) tetap tertolak.
+ * header `%PDF-` (dalam 1024 byte awal — ISO 32000-1 memperbolehkan
+ * junk sebelum header) serta trailer `%%EOF` (4 KB terakhir) agar
+ * berkas ber-ekstensi .pdf palsu (mis. script berbahaya, polyglot
+ * `%PDF-1.4` + isi tidak sah) tetap tertolak.
  */
 class ValidPdfFile implements ValidationRule
 {
@@ -22,6 +24,26 @@ class ValidPdfFile implements ValidationRule
     private const PDF_MAGIC = '%PDF-';
 
     /**
+     * Trailer wajib di akhir berkas PDF (ISO 32000-1 pasal 7.5.5).
+     */
+    private const PDF_TRAILER = '%%EOF';
+
+    /**
+     * Jumlah byte awal yang diperiksa untuk menemukan header `%PDF-`.
+     */
+    private const HEADER_SCAN_BYTES = 1024;
+
+    /**
+     * Jumlah byte akhir yang diperiksa untuk menemukan trailer `%%EOF`.
+     */
+    private const TRAILER_SCAN_BYTES = 4096;
+
+    /**
+     * Pesan saat berkas tidak dapat dibaca.
+     */
+    private const UNREADABLE_MESSAGE = 'Berkas PDF tidak dapat dibaca. Silakan unggah ulang.';
+
+    /**
      * Run the validation rule.
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -29,7 +51,7 @@ class ValidPdfFile implements ValidationRule
         $path = $this->resolveFilePath($value);
 
         if ($path === null || ! is_file($path)) {
-            $fail('Berkas PDF tidak dapat dibaca. Silakan unggah ulang.');
+            $fail(self::UNREADABLE_MESSAGE);
 
             return;
         }
@@ -37,15 +59,22 @@ class ValidPdfFile implements ValidationRule
         $handle = fopen($path, 'rb');
 
         if ($handle === false) {
-            $fail('Berkas PDF tidak dapat dibaca. Silakan unggah ulang.');
+            $fail(self::UNREADABLE_MESSAGE);
 
             return;
         }
 
-        $header = fread($handle, strlen(self::PDF_MAGIC));
-        fclose($handle);
+        try {
+            $head = fread($handle, self::HEADER_SCAN_BYTES);
+            $tailStart = (int) max(0, filesize($path) - self::TRAILER_SCAN_BYTES);
+            fseek($handle, $tailStart);
+            $tail = fread($handle, self::TRAILER_SCAN_BYTES);
+        } finally {
+            fclose($handle);
+        }
 
-        if ($header !== self::PDF_MAGIC) {
+        if (! str_contains((string) $head, self::PDF_MAGIC)
+            || ! str_contains((string) $tail, self::PDF_TRAILER)) {
             $fail('Berkas harus berupa PDF asli yang valid (bukan sekadar ekstensi .pdf).');
         }
     }

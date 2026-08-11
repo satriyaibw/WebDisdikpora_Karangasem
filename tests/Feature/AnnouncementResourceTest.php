@@ -101,10 +101,15 @@ class AnnouncementResourceTest extends TestCase
                 'title' => 'Pengumuman PDF Palsu',
                 'content' => '<p>Isi</p>',
                 'status' => Announcement::STATUS_DRAFT,
-                'attachment_path' => UploadedFile::fake()->createWithContent('palsu.pdf', '<script>alert(1)</script>'),
+                'attachment_path' => UploadedFile::fake()->createWithContent(
+                    'palsu.pdf',
+                    "%PDF-1.4\n<script>alert(1)</script>" // header palsu tanpa trailer %%EOF
+                ),
             ])
             ->call('create')
             ->assertHasFormErrors(['attachment_path']);
+
+        $this->assertCount(0, Storage::disk('public')->allFiles());
     }
 
     public function test_attachment_filename_is_sanitized_against_path_traversal(): void

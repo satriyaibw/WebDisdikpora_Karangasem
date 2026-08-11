@@ -134,6 +134,10 @@ class ImageOptimizerTest extends TestCase
     #[Test]
     public function it_applies_exif_orientation_to_phone_photos(): void
     {
+        if (! function_exists('exif_read_data')) {
+            $this->markTestSkipped('Ekstensi PHP exif tidak tersedia.');
+        }
+
         $tempPath = tempnam(sys_get_temp_dir(), 'exif');
         file_put_contents($tempPath, base64_decode(self::EXIF_JPEG_ORIENTATION_6));
 

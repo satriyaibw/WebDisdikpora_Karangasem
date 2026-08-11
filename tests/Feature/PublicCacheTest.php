@@ -143,26 +143,37 @@ class PublicCacheTest extends TestCase
     {
         config()->set('cache.default', 'file');
 
-        $value = PublicCache::remember('fallback.uji', fn () => 'lazim', [PublicCache::TAG_HOME], 60);
-        $this->assertEquals('lazim', $value);
+        try {
+            $value = PublicCache::remember('fallback.uji', fn () => 'lazim', [PublicCache::TAG_HOME], 60);
+            $this->assertEquals('lazim', $value);
 
-        $this->assertTrue(Cache::has('public.fallback.uji'));
+            $this->assertTrue(Cache::has('public.fallback.uji'));
 
-        PublicCache::forget('fallback.uji', [PublicCache::TAG_HOME]);
+            PublicCache::forget('fallback.uji', [PublicCache::TAG_HOME]);
 
-        $this->assertFalse(Cache::has('public.fallback.uji'));
-
-        config()->set('cache.default', 'array');
+            $this->assertFalse(Cache::has('public.fallback.uji'));
+        } finally {
+            config()->set('cache.default', 'array');
+        }
     }
 
     public function test_key_for_generates_stable_bounded_key_from_user_input(): void
     {
-        $a = PublicCache::keyFor('sop.list', ['  Judul SOP ', 'PAGE-2', null]);
-        $b = PublicCache::keyFor('sop.list', ['judul sop', 'page-2', null]);
+        $prefix = 'sop.list';
+        $a = PublicCache::keyFor($prefix, ['  Judul SOP ', 'PAGE-2', null]);
+        $b = PublicCache::keyFor($prefix, ['judul sop', 'page-2', null]);
 
         $this->assertEquals($a, $b);
-        $this->assertStringStartsWith('sop.list.', $a);
-        $this->assertSame(9 + 32, strlen($a));
+        $this->assertStringStartsWith($prefix.'.', $a);
+        $this->assertSame(strlen($prefix) + 1 + 32, strlen($a));
         $this->assertStringNotContainsString('Judul SOP', $a);
+    }
+
+    public function test_key_for_distinguishes_parts_containing_the_separator(): void
+    {
+        $single = PublicCache::keyFor('sop.list', ['Judul|SOP']);
+        $split = PublicCache::keyFor('sop.list', ['Judul', 'SOP']);
+
+        $this->assertNotSame($single, $split);
     }
 }

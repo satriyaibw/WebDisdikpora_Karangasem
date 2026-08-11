@@ -141,12 +141,21 @@ class ImageOptimizer
     /**
      * Rotasi gambar, kembalikan gambar asli bila rotasi gagal
      * (imagerotate bisa mengembalikan false pada gambar non-truecolor).
+     *
+     * Saat rotasi berhasil, `imagerotate` mengembalikan gambar baru;
+     * sumber lama dibebaskan agar tidak bocor per gambar yang diproses.
      */
     private static function rotateOrKeep(\GdImage $image, int $angle): \GdImage
     {
         $rotated = imagerotate($image, $angle, 0);
 
-        return $rotated !== false ? $rotated : $image;
+        if ($rotated === false) {
+            return $image;
+        }
+
+        imagedestroy($image);
+
+        return $rotated;
     }
 
     /**
