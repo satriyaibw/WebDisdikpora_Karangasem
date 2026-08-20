@@ -21,12 +21,12 @@
     </div>
 
     <div class="bg-white">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" class="flex items-center gap-3">
                 <img
                     src="{{ asset('images/disdikpora-logo.svg') }}"
                     alt="Logo {{ settings('site.name', 'Disdikpora Karangasem') }}"
-                    class="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14"
+                    class="h-24 w-24 shrink-0 object-contain sm:h-28 sm:w-28"
                 >
                 <div class="leading-tight">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Pemerintah Kabupaten Karangasem</p>

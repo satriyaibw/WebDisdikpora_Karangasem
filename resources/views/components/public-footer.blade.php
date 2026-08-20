@@ -12,7 +12,7 @@
                 <img
                     src="{{ asset('images/disdikpora-logo.svg') }}"
                     alt="Logo {{ settings('site.name', 'Disdikpora Karangasem') }}"
-                    class="h-12 w-12 object-contain"
+                    class="h-24 w-24 object-contain"
                     loading="lazy"
                 >
                 <div>

@@ -34,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
             ->brandName('Disdikpora Karangasem')
             ->brandLogo(asset('images/disdikpora-logo.svg'))
-            ->brandLogoHeight('2.25rem')
+            ->brandLogoHeight('6rem')
             ->favicon(asset('images/disdikpora-favicon.svg'))
             ->colors([
                 'primary' => Color::hex('#C41E2A'),
