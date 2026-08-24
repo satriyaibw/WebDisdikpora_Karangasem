@@ -2,17 +2,56 @@
 
 Website resmi **Dinas Pendidikan, Kepemudaan dan Olahraga Kabupaten Karangasem** — platform repositori informasi, katalog layanan publik, dokumen SOP, dan keterbukaan informasi publik (PPID) sesuai standar SPBE.
 
+---
+
+## 📋 1. Ringkasan Eksekutif & Prinsip Arsitektur
+
+Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** untuk website resmi **Disdikpora Kabupaten Karangasem**. Platform ini dirancang berfokus pada **Repositori Informasi, Katalog Layanan Publik, Dokumen SOP, dan Keterbukaan Informasi Publik (PPID)** sesuai dengan standar **Sistem Pemerintahan Berbasis Elektronik (SPBE)**, kriteria keamanan **BSSN**, dan **UU KIP No. 14 Tahun 2008**.
+
+### Pilar Arsitektur Utama:
+1. **Maintainability untuk Junior Programmer:** Arsitektur *Monolithic MVC* (Laravel 11 + FilamentPHP v3) yang bersih, deklaratif, dan mudah dikembangkan tanpa kerumitan framework JavaScript terpisah (SPA).
+2. **Performa Tinggi & Ringan (Lightweight):** Penggunaan *server-side caching* (Redis), kompresi media otomatis (`.webp`), dan *in-browser PDF preview* agar situs dapat diakses cepat (<2 detik) bahkan di area dengan jaringan terbatas.
+3. **Kemudahan Akses Publik (Zero Barrier):** Pengunjung dapat langsung mencari, membaca, dan mengunduh berkas tanpa melalui formulir permohonan yang rumit.
+
+---
+
+## 🛠️ 2. Sitemap Publik
+
+```
+[ LOGO DISDIKPORA KARANGASEM ]
+├── 1. Beranda (Homepage)
+├── 2. Profil Instansi
+│   ├── Sambutan Kepala Dinas
+│   ├── Visi, Misi & Tupoksi
+│   └── Struktur Organisasi
+├── 3. Katalog Layanan Publik (Kumpulan Layanan)
+├── 4. Dokumen SOP (Kumpulan Dokumen SOP per Bidang)
+├── 5. Informasi PPID (Kumpulan Dokumen PPID per Kategori)
+│   ├── Informasi Berkala
+│   ├── Informasi Serta Merta
+│   └── Informasi Setiap Saat
+├── 6. Berita & Media
+│   ├── Berita & Artikel
+│   ├── Pengumuman
+│   ├── Agenda Dinas
+│   └── Galeri Foto & Video
+└── 7. Kontak & Pengaduan (SP4N-LAPOR! & Internal)
+```
+
+---
+
 ## Tech Stack
 
-| Layer | Teknologi |
-| :--- | :--- |
-| Base Framework | PHP 8.3 (Docker) / 8.2+ (native — distro terbaru seperti Fedora 44 membawa 8.5, berfungsi) + Laravel 11.x |
-| Admin Panel Engine | FilamentPHP v3 *(Fase 2)* |
-| Frontend | Blade + Livewire 3 + Tailwind CSS |
-| Database | MySQL 8.4 LTS (Docker) / MySQL 8.x atau MariaDB (native, kompatibel) |
-| Cache & Queue | Redis 7 (Docker, dengan password) / Redis atau Valkey (native) |
-| Mail | SMTP Gmail (default — email reset kata sandi ke email asli) / Mailpit & `MAIL_MAILER=log` (dev) |
-| Environment | Docker & Docker Compose — atau instalasi native langsung (lihat bagian Setup Lokal) |
+| Layer | Teknologi | Keterangan & Keunggulan |
+| :--- | :--- | :--- |
+| **Base Framework** | PHP 8.3 + Laravel 11.x | Stabil, dokumentasi melimpah, dan menjadi standar pengembangan di Indonesia. |
+| **Admin Panel Engine** | FilamentPHP v3 | CMS otomatis berbasis PHP deklaratif untuk pembuatan form, tabel, dan filter. |
+| **Frontend Rendering** | Blade + Livewire 3 + Tailwind CSS | UI reaktif, ringan, fully-responsive, dan mudah diatur tampilannya. |
+| **Database** | MySQL 8.0 / MariaDB | Kompatibel dengan infrastruktur Server Data Center Pemkab Karangasem / Diskominfo. |
+| **Cache & Queue** | Redis | Menangani caching query dokumen/layanan, session, dan kompresi berkas background. |
+| **Environment** | Docker & Docker Compose | Konsistensi lingkungan dari lokal laptop developer hingga server produksi. |
+
+---
 
 ## Prasyarat
 
@@ -283,5 +322,5 @@ Pengiriman email reset **tidak akan berfungsi** dengan `MAIL_MAILER=log`. Di dev
 
 ## Referensi
 
-- `MasterPlan.md` — Rencana Implementasi Global (roadmap 8 fase)
+- **Roadmap Implementasi** — lihat bagian *Roadmap 8 Fase & Matriks Urutan Pengerjaan* di atas
 - Issue & backlog — https://github.com/satriyaibw/WebDisdikpora_Karangasem/issues

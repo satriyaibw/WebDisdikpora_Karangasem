@@ -13,7 +13,7 @@ Suite otomatis PHP: `docker compose exec app php artisan test`.
 | Kompatibilitas browser — 15 halaman × Chromium/Firefox/WebKit | **45/45 PASS** |
 | Lighthouse — 8 halaman utama | Aksesibilitas **100**, Best Practices **100**, SEO **100**, Performa 76–78 |
 
-## Pemetaan ke MasterPlan
+## Pemetaan ke Roadmap (README)
 
 - **Fase 2.1** (SEO & Aksesibilitas): akses 100 pada seluruh halaman publik, heading berurutan, kontras WCAG AA, target sentuh rutin.
 - **Fase 5.1** (Kinerja): CLS 0.406 → 0; LCP tertunda 6.3 s karena `x-cloak` hero dihilangkan; skor performa stabil 76–78 (sisa gap: bundle Livewire bawaan).
