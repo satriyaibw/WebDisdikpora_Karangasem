@@ -29,6 +29,7 @@ Route::get('/layanan/{service:slug}', [ServiceController::class, 'show'])->name(
 Route::get('/sop', [SopController::class, 'index'])->name('sop.index');
 Route::get('/sop/{sopDocument:slug}', [SopController::class, 'show'])->name('sop.show');
 Route::get('/sop/{sopDocument:slug}/download', [SopController::class, 'download'])->name('sop.download');
+Route::get('/sop/{sopDocument:slug}/preview', [SopController::class, 'preview'])->name('sop.preview');
 
 Route::get('/ppid', [PpidController::class, 'index'])->name('ppid.index');
 Route::get('/ppid/{ppidDocument}/download', [PpidController::class, 'download'])->name('ppid.download');

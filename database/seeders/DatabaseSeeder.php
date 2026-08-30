@@ -41,11 +41,14 @@ class DatabaseSeeder extends Seeder
                 $isWeak = in_array($explicitPassword, $weak, true) || strlen($explicitPassword) < 8;
                 if ($isWeak) {
                     if (app()->environment('testing')) {
-                        $explicitPassword = null; // ponytail: testing fallback to random, prod tetap error
+                        $explicitPassword = null; // testing fallback ke random, prod tetap fail-loud
                     } else {
-                        $this->command->error('ADMIN_INITIAL_PASSWORD kosong/lemah — set di .env sebelum seed (min 8 karakter, jangan pakai password default)');
+                        $message = 'ADMIN_INITIAL_PASSWORD kosong/lemah — set di .env sebelum seed (min 8 karakter, jangan pakai password default)';
+                        if (isset($this->command)) {
+                            $this->command->error($message);
+                        }
 
-                        return;
+                        throw new \RuntimeException($message);
                     }
                 }
             }

@@ -33,7 +33,8 @@ class SecurityHeadersTest extends TestCase
         $csp = $response->headers->get('Content-Security-Policy');
         $this->assertNotNull($csp);
         $this->assertStringContainsString("script-src 'self' 'nonce-", $csp);
-        $this->assertStringNotContainsString("'unsafe-eval'", $csp);
+        // Livewire 3 + Alpine butuh 'unsafe-eval' untuk AsyncFunction (console EvalError jika hilang)
+        $this->assertStringContainsString("'unsafe-eval'", $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
         $this->assertStringContainsString("frame-src 'self'", $csp);
         $this->assertStringContainsString("frame-ancestors 'self'", $csp);

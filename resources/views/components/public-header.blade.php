@@ -130,7 +130,7 @@
     </nav>
 </header>
 
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     document.addEventListener('alpine:init', () => {
         Alpine.data('clock', () => ({
             now: '',

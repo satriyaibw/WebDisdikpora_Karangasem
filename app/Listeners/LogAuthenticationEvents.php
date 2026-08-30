@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class LogAuthenticationEvents
 {
@@ -22,15 +24,24 @@ class LogAuthenticationEvents
             $userId = $event->user->id ?? null;
         }
 
-        AuditLog::create([
-            'user_id' => $userId,
-            'action' => class_basename($event),
-            'model_type' => User::class,
-            'model_id' => $userId,
-            'old_values' => null,
-            'new_values' => $email ? ['email' => $email] : null,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => $userId,
+                'action' => class_basename($event),
+                'model_type' => User::class,
+                'model_id' => $userId,
+                'old_values' => null,
+                'new_values' => $email ? ['email' => $email] : null,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        } catch (Throwable $e) {
+            // Audit log tidak boleh memblokir login/logout — fail silent + log warning
+            Log::warning('Gagal mencatat audit login', [
+                'action' => class_basename($event),
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

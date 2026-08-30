@@ -41,7 +41,15 @@ if (! function_exists('public_download_response')) {
      */
     function public_download_response(?string $path): Response
     {
-        if (! $path || ! Storage::disk('public')->exists($path)) {
+        if (! $path) {
+            abort(404);
+        }
+        // Hardening: block path traversal & null byte (best practice Storage)
+        if (str_contains($path, '..') || str_contains($path, "\0") || str_starts_with($path, '/') || str_starts_with($path, '\\')) {
+            abort(404);
+        }
+        $path = ltrim($path, '/');
+        if (! Storage::disk('public')->exists($path)) {
             abort(404);
         }
 
@@ -60,11 +68,40 @@ if (! function_exists('gated_download_response')) {
         if (! $path) {
             abort(404);
         }
+        // Hardening: block path traversal, null byte, absolute path & Windows drive letter
+        if (str_contains($path, '..') || str_contains($path, "\0") || str_starts_with($path, '/') || str_starts_with($path, '\\') || (bool) preg_match('#^[a-zA-Z]:#', $path)) {
+            abort(404);
+        }
+        $path = ltrim($path, '/');
         if (Storage::disk('local')->exists($path)) {
             return Storage::disk('local')->download($path);
         }
         if (Storage::disk('public')->exists($path)) {
             return Storage::disk('public')->download($path);
+        }
+        abort(404);
+    }
+}
+
+if (! function_exists('gated_inline_response')) {
+    /**
+     * Respon inline (pratinjau) untuk dokumen gated di disk `local`/`public`.
+     * Dipakai iframe SOP agar PDF tampil inline, bukan attachment.
+     */
+    function gated_inline_response(?string $path): Response
+    {
+        if (! $path) {
+            abort(404);
+        }
+        if (str_contains($path, '..') || str_contains($path, "\0") || str_starts_with($path, '/') || str_starts_with($path, '\\') || (bool) preg_match('#^[a-zA-Z]:#', $path)) {
+            abort(404);
+        }
+        $path = ltrim($path, '/');
+        if (Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->response($path);
+        }
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path);
         }
         abort(404);
     }

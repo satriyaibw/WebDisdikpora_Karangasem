@@ -19,7 +19,7 @@ jobs:
       - name: Install Composer deps
         run: composer install --no-interaction --prefer-dist
       - name: Composer audit
-        run: composer audit --format=json | php -r '$j=json_decode(file_get_contents("php://stdin"),true); $bad=array_filter($j["advisories"]??[], fn($a)=>in_array($a["severity"]??"", ["high","critical"])); if($bad){ echo json_encode($bad, JSON_PRETTY_PRINT)."\n"; exit(1);} echo "No high/critical advisories\n";'
+        run: composer audit --format=json | php -r '$j=json_decode(file_get_contents("php://stdin"),true); $bad=[]; foreach(($j["advisories"]??[]) as $pkg=>$list){ foreach((array)$list as $a){ if(in_array($a["severity"]??"", ["high","critical"], true)) $bad[$pkg][]=$a; }} if($bad){ echo json_encode($bad, JSON_PRETTY_PRINT)."\n"; exit(1);} echo "No high/critical advisories\n";'
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

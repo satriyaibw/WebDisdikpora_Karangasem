@@ -109,7 +109,7 @@ class Service extends Model
     }
 
     /**
-     * URL publik template formulir, null bila berkas tidak tersedia.
+     * URL template formulir. Legacy public -> direct URL, gated local -> download route.
      */
     public function getFormTemplateUrlAttribute(): ?string
     {
@@ -118,6 +118,9 @@ class Service extends Model
         }
         if (Storage::disk('public')->exists($this->form_template)) {
             return Storage::disk('public')->url($this->form_template);
+        }
+        if (Storage::disk('local')->exists($this->form_template)) {
+            return route('layanan.unduh-formulir', $this);
         }
 
         return null;
