@@ -49,6 +49,27 @@ if (! function_exists('public_download_response')) {
     }
 }
 
+if (! function_exists('gated_download_response')) {
+    /**
+     * Respon unduhan untuk dokumen gated (SOP/PPID/Layanan/Unduhan/Pengumuman)
+     * yang disimpan di disk `local` (private). Fallback ke `public` untuk
+     * kompatibilitas file lama sebelum migrasi MED-02.
+     */
+    function gated_download_response(?string $path): Response
+    {
+        if (! $path) {
+            abort(404);
+        }
+        if (Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->download($path);
+        }
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->download($path);
+        }
+        abort(404);
+    }
+}
+
 if (! function_exists('escapeLike')) {
     /**
      * Escape karakter wildcard SQL LIKE (`%`, `_`, `\`) dari input pencarian

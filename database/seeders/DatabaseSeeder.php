@@ -36,6 +36,20 @@ class DatabaseSeeder extends Seeder
         $explicitPassword = config('app.admin_initial_password');
 
         if (! $admin->exists || $explicitPassword) {
+            if ($explicitPassword !== null && $explicitPassword !== '') {
+                $weak = ['Password!2026', 'password', 'admin123', '123456'];
+                $isWeak = in_array($explicitPassword, $weak, true) || strlen($explicitPassword) < 8;
+                if ($isWeak) {
+                    if (app()->environment('testing')) {
+                        $explicitPassword = null; // ponytail: testing fallback to random, prod tetap error
+                    } else {
+                        $this->command->error('ADMIN_INITIAL_PASSWORD kosong/lemah — set di .env sebelum seed (min 8 karakter, jangan pakai password default)');
+
+                        return;
+                    }
+                }
+            }
+
             $password = $explicitPassword ?? Str::password();
             $admin->password = $password;
 

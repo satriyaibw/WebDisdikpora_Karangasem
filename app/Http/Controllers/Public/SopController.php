@@ -25,6 +25,6 @@ class SopController extends Controller
     {
         abort_unless($sopDocument->status === SopDocument::STATUS_PUBLISHED, 404);
 
-        return public_download_response($sopDocument->file_path);
+        return gated_download_response($sopDocument->file_path);
     }
 }

@@ -46,8 +46,14 @@ trait DeletesOrphanedFiles
 
     protected static function deleteStoredFile(?string $path): void
     {
-        if (is_string($path) && $path !== '' && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if (! is_string($path) || $path === '') {
+            return;
+        }
+        // Hapus dari kedua disk untuk transisi MED-02 (legacy public + baru local)
+        foreach (['local', 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
         }
     }
 }

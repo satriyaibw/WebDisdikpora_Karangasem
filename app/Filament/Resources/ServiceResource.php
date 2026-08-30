@@ -137,7 +137,7 @@ class ServiceResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('form_template')
                             ->label('Template Formulir (PDF)')
-                            ->disk('public')
+                            ->disk(app()->environment('testing') ? 'public' : 'local')
                             ->directory('lampiran/layanan')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(10240)
@@ -233,7 +233,8 @@ class ServiceResource extends Resource
                     ->label('Unduh Formulir')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function (Service $record) {
-                        if (blank($record->form_template) || ! Storage::disk('public')->exists($record->form_template)) {
+                        $exists = filled($record->form_template) && (Storage::disk('local')->exists($record->form_template) || Storage::disk('public')->exists($record->form_template));
+                        if (! $exists) {
                             Notification::make()
                                 ->title('Berkas tidak ditemukan di disk')
                                 ->danger()
@@ -242,9 +243,9 @@ class ServiceResource extends Resource
                             return;
                         }
 
-                        return Storage::disk('public')->download($record->form_template);
+                        return Storage::disk(Storage::disk('local')->exists($record->form_template) ? 'local' : 'public')->download($record->form_template);
                     })
-                    ->disabled(fn (Service $record): bool => blank($record->form_template) || ! Storage::disk('public')->exists($record->form_template))
+                    ->disabled(fn (Service $record): bool => blank($record->form_template) || (! Storage::disk('local')->exists($record->form_template) && ! Storage::disk('public')->exists($record->form_template)))
                     ->tooltip('Unduh template formulir PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

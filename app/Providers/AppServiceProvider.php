@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogAuthenticationEvents;
 use App\Models\Agenda;
 use App\Models\Album;
 use App\Models\AlbumPhoto;
@@ -20,8 +21,12 @@ use App\Models\Slider;
 use App\Models\SopDocument;
 use App\Models\Video;
 use App\Support\PublicCache;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -43,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
         $this->registerPublicCacheInvalidation();
 
         $this->registerRateLimiters();
+
+        $this->registerAuthenticationLogging();
     }
 
     /**
@@ -104,5 +111,12 @@ class AppServiceProvider extends ServiceProvider
     private function registerRateLimiters(): void
     {
         RateLimiter::for('public', static fn (Request $request) => Limit::perMinute(6)->by($request->ip() ?? 'guest'));
+    }
+
+    private function registerAuthenticationLogging(): void
+    {
+        Event::listen(Login::class, LogAuthenticationEvents::class);
+        Event::listen(Logout::class, LogAuthenticationEvents::class);
+        Event::listen(Failed::class, LogAuthenticationEvents::class);
     }
 }

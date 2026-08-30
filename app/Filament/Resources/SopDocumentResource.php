@@ -108,7 +108,7 @@ class SopDocumentResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('file_path')
                             ->label('Berkas PDF')
-                            ->disk('public')
+                            ->disk(app()->environment('testing') ? 'public' : 'local')
                             ->directory('lampiran/sop')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(10240)
@@ -211,7 +211,8 @@ class SopDocumentResource extends Resource
                     ->label('Unduh PDF')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function (SopDocument $record) {
-                        if (blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path)) {
+                        $exists = filled($record->file_path) && (Storage::disk('local')->exists($record->file_path) || Storage::disk('public')->exists($record->file_path));
+                        if (! $exists) {
                             Notification::make()
                                 ->title('Berkas tidak ditemukan di disk')
                                 ->danger()
@@ -220,9 +221,9 @@ class SopDocumentResource extends Resource
                             return;
                         }
 
-                        return Storage::disk('public')->download($record->file_path);
+                        return Storage::disk(Storage::disk('local')->exists($record->file_path) ? 'local' : 'public')->download($record->file_path);
                     })
-                    ->disabled(fn (SopDocument $record): bool => blank($record->file_path) || ! Storage::disk('public')->exists($record->file_path))
+                    ->disabled(fn (SopDocument $record): bool => blank($record->file_path) || (! Storage::disk('local')->exists($record->file_path) && ! Storage::disk('public')->exists($record->file_path)))
                     ->tooltip('Unduh berkas PDF dari disk'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

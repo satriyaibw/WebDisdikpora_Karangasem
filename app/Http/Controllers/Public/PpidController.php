@@ -16,6 +16,6 @@ class PpidController extends Controller
     {
         abort_unless($ppidDocument->status === PpidDocument::STATUS_PUBLISHED, 404);
 
-        return public_download_response($ppidDocument->file_path);
+        return gated_download_response($ppidDocument->file_path);
     }
 }

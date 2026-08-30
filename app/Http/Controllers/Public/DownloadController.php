@@ -25,6 +25,6 @@ class DownloadController extends Controller
     {
         abort_unless($downloadFile->status === DownloadFile::STATUS_PUBLISHED, 404);
 
-        return public_download_response($downloadFile->file_path);
+        return gated_download_response($downloadFile->file_path);
     }
 }

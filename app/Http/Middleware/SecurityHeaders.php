@@ -20,6 +20,9 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $nonce = base64_encode(random_bytes(16));
+        $request->attributes->set('csp_nonce', $nonce);
+
         $response = $next($request);
 
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
@@ -28,18 +31,24 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
         if (config('security.csp_enabled')) {
-            $response->headers->set('Content-Security-Policy', $this->buildCsp());
+            $response->headers->set('Content-Security-Policy', $this->buildCsp($request));
         }
 
         return $response;
     }
 
     /**
-     * Susun CSP: base dari config + source Vite dev bila lokal/HMR aktif.
+     * Susun CSP: base dari config + nonce + source Vite dev bila lokal/HMR aktif.
      */
-    private function buildCsp(): string
+    private function buildCsp(Request $request): string
     {
         $csp = (string) config('security.csp');
+        $nonce = $request->attributes->get('csp_nonce');
+
+        if (is_string($nonce) && $nonce !== '') {
+            $csp = str_replace("'unsafe-inline' 'unsafe-eval'", "'nonce-{$nonce}'", $csp);
+            // Fallback bila format CSP berubah: ganti sisa unsafe-inline di style-src dengan nonce juga? ponytail: biarkan style-src unsafe-inline untuk Tailwind/Filament
+        }
 
         if (! $this->isViteDevActive()) {
             return $csp;
