@@ -30,6 +30,10 @@ jobs:
         run: npm audit --audit-level=high || (echo "High/critical npm vulnerabilities found"; exit 1)
       - name: Build assets
         run: npm run build
+      - name: Prepare env for tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate --no-interaction
       - name: Run tests
         run: php artisan test
       - name: Pint check
