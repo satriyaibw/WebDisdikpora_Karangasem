@@ -25,6 +25,6 @@ class ServiceController extends Controller
     {
         abort_unless($service->status === Service::STATUS_PUBLISHED, 404);
 
-        return public_download_response($service->form_template);
+        return gated_download_response($service->form_template);
     }
 }

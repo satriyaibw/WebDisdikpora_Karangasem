@@ -24,6 +24,6 @@ class AnnouncementController extends Controller
     {
         abort_unless($announcement->status === Announcement::STATUS_PUBLISHED, 404);
 
-        return public_download_response($announcement->attachment_path);
+        return gated_download_response($announcement->attachment_path);
     }
 }

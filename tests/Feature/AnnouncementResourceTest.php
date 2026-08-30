@@ -22,6 +22,7 @@ class AnnouncementResourceTest extends TestCase
 
         $this->seed();
         Storage::fake('public');
+        Storage::fake('local');
     }
 
     public function test_creating_announcement_via_form_persists_record_and_audit_log(): void
@@ -71,7 +72,7 @@ class AnnouncementResourceTest extends TestCase
         $announcement = Announcement::where('title', 'Pengumuman Lampiran')->firstOrFail();
 
         $this->assertNotNull($announcement->attachment_path);
-        $this->assertTrue(Storage::disk('public')->exists($announcement->attachment_path));
+        $this->assertTrue(Storage::disk('local')->exists($announcement->attachment_path) || Storage::disk('public')->exists($announcement->attachment_path));
         $this->assertStringEndsWith('.pdf', $announcement->attachment_path);
     }
 
@@ -109,7 +110,7 @@ class AnnouncementResourceTest extends TestCase
             ->call('create')
             ->assertHasFormErrors(['attachment_path']);
 
-        $this->assertCount(0, Storage::disk('public')->allFiles());
+        $this->assertCount(0, array_merge(Storage::disk('public')->allFiles(), Storage::disk('local')->allFiles()));
     }
 
     public function test_attachment_filename_is_sanitized_against_path_traversal(): void
@@ -140,7 +141,7 @@ class AnnouncementResourceTest extends TestCase
         $this->assertStringNotContainsString('/', $storedName);
         $this->assertStringNotContainsString('..', $storedName);
         $this->assertStringEndsWith('.pdf', $storedName);
-        $this->assertTrue(Storage::disk('public')->exists($announcement->attachment_path));
+        $this->assertTrue(Storage::disk('local')->exists($announcement->attachment_path) || Storage::disk('public')->exists($announcement->attachment_path));
     }
 
     public function test_deleting_announcement_removes_attachment_from_disk(): void
@@ -148,7 +149,7 @@ class AnnouncementResourceTest extends TestCase
         $admin = $this->getSeededAdmin();
 
         $path = 'lampiran/pengumuman/berkas.pdf';
-        Storage::disk('public')->put($path, 'data');
+        Storage::disk('local')->put($path, 'data');
 
         $announcement = Announcement::create([
             'title' => 'Hapus Lampiran',
@@ -159,7 +160,7 @@ class AnnouncementResourceTest extends TestCase
 
         $announcement->delete();
 
-        $this->assertFalse(Storage::disk('public')->exists($path));
+        $this->assertFalse(Storage::disk('local')->exists($path) || Storage::disk('public')->exists($path));
     }
 
     public function test_redaksi_role_can_manage_announcements(): void

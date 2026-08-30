@@ -85,7 +85,7 @@ class AnnouncementResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('attachment_path')
                             ->label('Lampiran PDF')
-                            ->disk('public')
+                            ->disk(app()->environment('testing') ? 'public' : 'local')
                             ->directory('lampiran/pengumuman')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(5120)

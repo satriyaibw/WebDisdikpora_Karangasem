@@ -96,22 +96,32 @@ class SopDocument extends Model
     }
 
     /**
-     * Apakah berkas PDF benar-benar ada di disk `public`
-     * (menghindari tautan/iframe rusak bila berkas dihapus tanpa update baris).
+     * Apakah berkas PDF benar-benar ada di disk `local` (private) atau fallback `public`.
      */
     public function getFileExistsAttribute(): bool
     {
         return $this->file_path !== null
-            && Storage::disk('public')->exists($this->file_path);
+            && (Storage::disk('local')->exists($this->file_path) || Storage::disk('public')->exists($this->file_path));
     }
 
     /**
-     * URL publik berkas PDF, null bila berkas tidak tersedia.
+     * URL berkas PDF untuk pratinjau iframe.
+     * Legacy public -> direct /storage URL, gated local -> preview route (inline).
      */
     public function getFileUrlAttribute(): ?string
     {
-        return $this->file_exists
-            ? Storage::disk('public')->url($this->file_path)
-            : null;
+        if (! $this->file_exists) {
+            return null;
+        }
+        // Legacy public file masih pakai URL /storage
+        if (Storage::disk('public')->exists($this->file_path)) {
+            return Storage::disk('public')->url($this->file_path);
+        }
+        // Gated local file: pakai preview inline (bukan download attachment)
+        if (Storage::disk('local')->exists($this->file_path)) {
+            return route('sop.preview', $this);
+        }
+
+        return null;
     }
 }

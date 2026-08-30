@@ -100,22 +100,29 @@ class Service extends Model
     }
 
     /**
-     * Apakah template formulir benar-benar ada di disk `public`
-     * (menghindari tautan rusak bila berkas dihapus tanpa update baris).
+     * Apakah template formulir benar-benar ada di disk `local` atau fallback `public`.
      */
     public function getHasFormTemplateAttribute(): bool
     {
         return $this->form_template !== null
-            && Storage::disk('public')->exists($this->form_template);
+            && (Storage::disk('local')->exists($this->form_template) || Storage::disk('public')->exists($this->form_template));
     }
 
     /**
-     * URL publik template formulir, null bila berkas tidak tersedia.
+     * URL template formulir. Legacy public -> direct URL, gated local -> download route.
      */
     public function getFormTemplateUrlAttribute(): ?string
     {
-        return $this->has_form_template
-            ? Storage::disk('public')->url($this->form_template)
-            : null;
+        if (! $this->has_form_template) {
+            return null;
+        }
+        if (Storage::disk('public')->exists($this->form_template)) {
+            return Storage::disk('public')->url($this->form_template);
+        }
+        if (Storage::disk('local')->exists($this->form_template)) {
+            return route('layanan.unduh-formulir', $this);
+        }
+
+        return null;
     }
 }
