@@ -3,12 +3,14 @@
 /**
  * Patch idempotent deprecation PHP 8.5 `PDO::MYSQL_ATTR_SSL_CA`.
  *
- * Laravel 11.x (EOL) masih memuat `vendor/laravel/framework/config/database.php`
- * sebagai base configuration di setiap boot, dan merujuk konstanta PDO yang
- * di-deprecate sejak PHP 8.5 — memicu warning deprecation di seluruh output
- * artisan/test pada PHP 8.5. Fix upstream (guard `defined('Pdo\Mysql::ATTR_SSL_CA')`)
- * baru tersedia di Laravel >= 12.40, sehingga diterapkan lewat script composer
- * ini (hook post-install-cmd / post-update-cmd).
+ * Laravel 11.x (EOL) dan Laravel 12.x < 12.40 masih memuat
+ * `vendor/laravel/framework/config/database.php` sebagai base configuration di
+ * setiap boot, dan merujuk konstanta PDO yang di-deprecate sejak PHP 8.5 —
+ * memicu warning deprecation di seluruh output artisan/test pada PHP 8.5.
+ * Fix upstream (guard `defined('Pdo\Mysql::ATTR_SSL_CA')`) baru tersedia di
+ * Laravel >= 12.40 (kini v12.68.0 terkunci — patch menjadi no-op/Up-to-date),
+ * sehingga diterapkan lewat script composer ini (hook post-install-cmd /
+ * post-update-cmd) untuk kompatibilitas wst.
  *
  * Idempotent: no-op bila baris sudah ter-patch; aman bila versi framework
  * di masa depan sudah memuat fix. Vendor di-gitignore — hasil patch

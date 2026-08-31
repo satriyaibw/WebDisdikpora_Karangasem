@@ -1,6 +1,6 @@
 # Laporan QA — Fase 8.1 (Pengujian Otomatis & Audit)
 
-Disusun 2026-08-10. Skrip pengujian tersedia di `scripts/qa/` (Playwright + Lighthouse).
+Disusun 2026-08-10. Framework: Laravel 12.x (`^12.0`, terkunci `v12.68.0` di `composer.lock:2180` — PHP 8.2–8.5, rilis 24 Feb 2025). Skrip pengujian tersedia di `scripts/qa/` (Playwright + Lighthouse).
 Suite otomatis PHP: `docker compose exec app php artisan test`.
 
 ## Hasil

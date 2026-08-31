@@ -9,7 +9,7 @@ Website resmi **Dinas Pendidikan, Kepemudaan dan Olahraga Kabupaten Karangasem**
 Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** untuk website resmi **Disdikpora Kabupaten Karangasem**. Platform ini dirancang berfokus pada **Repositori Informasi, Katalog Layanan Publik, Dokumen SOP, dan Keterbukaan Informasi Publik (PPID)** sesuai dengan standar **Sistem Pemerintahan Berbasis Elektronik (SPBE)**, kriteria keamanan **BSSN**, dan **UU KIP No. 14 Tahun 2008**.
 
 ### Pilar Arsitektur Utama:
-1. **Maintainability untuk Junior Programmer:** Arsitektur *Monolithic MVC* (Laravel 11 + FilamentPHP v3) yang bersih, deklaratif, dan mudah dikembangkan tanpa kerumitan framework JavaScript terpisah (SPA).
+1. **Maintainability untuk Junior Programmer:** Arsitektur *Monolithic MVC* (Laravel 12 + FilamentPHP v3) yang bersih, deklaratif, dan mudah dikembangkan tanpa kerumitan framework JavaScript terpisah (SPA).
 2. **Performa Tinggi & Ringan (Lightweight):** Penggunaan *server-side caching* (Redis), kompresi media otomatis (`.webp`), dan *in-browser PDF preview* agar situs dapat diakses cepat (<2 detik) bahkan di area dengan jaringan terbatas.
 3. **Kemudahan Akses Publik (Zero Barrier):** Pengunjung dapat langsung mencari, membaca, dan mengunduh berkas tanpa melalui formulir permohonan yang rumit.
 
@@ -44,7 +44,7 @@ Dokumen ini merupakan **Rencana Pembangunan Global (High-Level Master Plan)** un
 
 | Layer | Teknologi | Keterangan & Keunggulan |
 | :--- | :--- | :--- |
-| **Base Framework** | PHP 8.3 + Laravel 11.x | Stabil, dokumentasi melimpah, dan menjadi standar pengembangan di Indonesia. |
+| **Base Framework** | PHP 8.3 + Laravel 12.x (`^12.0`, terkunci `v12.68.0` di `composer.lock:2180`) | Stabil, dokumentasi melimpah, mensyaratkan PHP 8.2–8.5 (Laravel 12 rilis 24 Feb 2025 — bug fixes hingga 13 Agu 2026, security hingga 24 Feb 2027), dan menjadi standar pengembangan di Indonesia. |
 | **Admin Panel Engine** | FilamentPHP v3 | CMS otomatis berbasis PHP deklaratif untuk pembuatan form, tabel, dan filter. |
 | **Frontend Rendering** | Blade + Livewire 3 + Tailwind CSS | UI reaktif, ringan, fully-responsive, dan mudah diatur tampilannya. |
 | **Database** | MySQL 8.0 / MariaDB | Kompatibel dengan infrastruktur Server Data Center Pemkab Karangasem / Diskominfo. |
@@ -172,7 +172,7 @@ php artisan schedule:work                          # scheduler (cron pengganti)
 | :--- | :--- | :--- |
 | Unduh/pratinjau berkas 404 (SOP, PPID, unduhan, galeri, berita) | Symlink `public/storage` belum ada — `Storage::url()` menghasilkan `{APP_URL}/storage/...` yang tidak dilayani web server | `php artisan storage:link`, lalu bersihkan cache (`php artisan optimize:clear`). Otomatis dibuat saat `composer install` via `post-autoload-dump` |
 | URL situs/berkas mengarah ke port 80 saat memakai `php artisan serve` | `APP_URL=http://localhost` (benar hanya untuk nginx Docker di port 80) | Set `APP_URL=http://127.0.0.1:8000` di `.env` lalu `php artisan optimize:clear` |
-| `ErrorException: Cannot use bool as array` di `RedisTagSet` saat cache Redis | phpredis 6.x tidak kompatibel dengan operasi cache bertag Laravel 11 (mis. `PublicCache` flush saat seeding) | Set `CACHE_STORE=file` di `.env`. Session/queue via Redis tetap aman — hanya cache bertag yang bermasalah |
+| `ErrorException: Cannot use bool as array` di `RedisTagSet` saat cache Redis | phpredis 6.x tidak kompatibel dengan operasi cache bertag Laravel 12 (juga terjadi di 11) pada `RedisTagSet` (mis. `PublicCache` flush saat seeding) | Set `CACHE_STORE=file` di `.env`. Session/queue via Redis tetap aman — hanya cache bertag yang bermasalah |
 | Koneksi database gagal di native | `DB_HOST=db` (nama service Docker) tidak dikenal di host | Set `DB_HOST=127.0.0.1` (sesuaikan user/password dengan database yang dibuat) |
 | Email tidak terkirim (dev) | `MAIL_PASSWORD` belum diisi, atau `MAIL_HOST=mailpit` dipakai di luar Docker | Isi Google App Password di `MAIL_PASSWORD` lalu `docker compose restart app queue-worker`; atau untuk dev tanpa akun Gmail gunakan `MAIL_MAILER=log` / `MAIL_HOST=mailpit` |
 | `public/storage` terlanjur ada sebagai folder (bukan symlink) | Dibuat manual tanpa `storage:link` | Hapus folder kosong tersebut (JANGAN hapus `storage/app/public`), lalu `php artisan storage:link` |
@@ -308,16 +308,16 @@ Pengiriman email reset **tidak akan berfungsi** dengan `MAIL_MAILER=log`. Di dev
 
 - Seluruh environment diset timezone **WITA** (`Asia/Makassar`).
 - Database tersimpan di volume Docker `dbdata` — tidak hilang saat container di-restart.
-- Versi Laravel mengikuti keputusan issue #1: **Laravel 11.x** (framework ini telah EOL; pastikan roadmap peningkatan versi keamanan direncanakan pada fase hardening).
+- Versi Laravel mengikuti keputusan issue #1: **Laravel 12.x** (`^12.0`, terkunci `v12.68.0` di `composer.lock:2179`) — di-upgrade dari 11.x (11 EOL Maret 2026; 12 rilis 24 Feb 2025, bug fixes hingga 13 Agu 2026, security hingga 24 Feb 2027, mensyaratkan PHP 8.2–8.5). Roadmap hardening fase upgrade telah terlaksana.
 - Konfigurasi rahasia HANYA disimpan di `.env` lokal, tidak pernah dikomit.
 - Port `3306` (MySQL) dan `6379` (Redis) hanya dipublikasikan ke `127.0.0.1` (loopback) untuk keperluan tooling lokal.
 - `php artisan storage:link` otomatis dieksekusi saat `composer install`/`composer update` (script `post-autoload-dump` di `composer.json`, idempotent — tidak menimpa symlink/folder yang sudah ada). `public/storage` dan `storage/app/public` di-gitignore sehingga aman di semua environment.
-- `scripts/patch-framework-pdo-constants.php` (dijalankan saat `composer install`/`composer update`) mem-patch `vendor/laravel/framework/config/database.php` agar tidak memicu deprecation `PDO::MYSQL_ATTR_SSL_CA` di PHP 8.5 — fix ini hanya tersedia di Laravel ≥ 12.40. Idempotent (no-op bila sudah ter-patch atau versi framework sudah memuat fix).
+- `scripts/patch-framework-pdo-constants.php` (dijalankan saat `composer install`/`composer update`) mem-patch `vendor/laravel/framework/config/database.php` dan `MySqlSchemaState.php` agar tidak memicu deprecation `PDO::MYSQL_ATTR_SSL_CA` di PHP 8.5 — fix upstream hanya tersedia di Laravel ≥ 12.40. Idempotent (no-op di `v12.68.0` — verifikasi `Up-to-date: vendor/...` saat install; aman bila versi framework di masa depan sudah memuat fix).
 - Seeder membuat PDF contoh valid (bukan string PDF kosong), sehingga pratinjau data hasil seeding tampil normal.
 
 ## Catatan Keamanan
 
-- **`composer.json` menonaktifkan blokir security advisory** (`policy.advisories.block: false`). Ini disengaja karena Laravel 11 sudah EOL dan memiliki CVE publik sehingga `composer install` akan gagal jika diaktifkan. **WAJIB dihapus** setelah upgrade ke Laravel 12.61.1+ sebelum go-live, dan pantau kerentanan secara rutin dengan `composer audit`.
+- **Security advisory — riwayat `policy.advisories.block: false` (Laravel 11 EOL):** Pada era Laravel 11.x (EOL Maret 2026) konfigurasi ini sengaja dinonaktifkan karena CVE publik akan menggagalkan `composer install`. **Setelah upgrade ke Laravel 12.61.1+ (kini `v12.68.0` terkunci di `composer.lock:2180`) konfigurasi tersebut telah dihapus** (`composer.json:74` tidak lagi memuat `policy`/`advisories`) — verifikasi dengan `composer audit` yang kini aktif; pantau kerentanan rutin (`composer audit` / `docker compose exec app composer audit`).
 - MySQL 8.0 telah EOL sejak April 2026 — image telah di-pin ke `mysql:8.4` (LTS). Perhatikan versi image Docker lain yang di-pin agar selalu mendapat update keamanan.
 
 ## Referensi
