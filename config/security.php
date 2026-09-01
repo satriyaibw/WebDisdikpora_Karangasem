@@ -35,13 +35,26 @@ return [
         ."img-src 'self' data: blob: https:; "
         ."font-src 'self' data:; "
         ."connect-src 'self'; "
-        // frame-src 'self': pratinjau PDF SOP di iframe same-origin (/storage/...).
+        // frame-src 'self': pratinjau PDF SOP di iframe same-origin (via /sop/{slug}/preview).
         // object-src tetap 'none' — tidak ada <object>/<embed> di aplikasi.
         ."frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.google.com https://maps.google.com; "
         ."object-src 'none'; "
         ."base-uri 'self'; "
         ."form-action 'self'; "
         ."frame-ancestors 'self'"),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CSP Frame Ancestors Extra (best practice untuk Cloudflare Tunnel)
+    |--------------------------------------------------------------------------
+    |
+    | Source tambahan untuk `frame-src` dan `frame-ancestors` agar pratinjau
+    | PDF via `*.trycloudflare.com` tidak terblok saat APP_URL berganti.
+    | Kosong di produksi (strict 'self'). Saat lokal + APP_URL mengandung
+    | trycloudflare.com, middleware otomatis menambahkan wildcard tersebut.
+    |
+    */
+    'csp_frame_ancestors_extra' => env('SECURITY_CSP_FRAME_ANCESTORS_EXTRA', ''),
 
     /*
     |--------------------------------------------------------------------------
