@@ -66,7 +66,8 @@ class SecurityHeaders
     }
 
     /**
-     * Susun CSP: base dari config + nonce + source Vite dev bila lokal/HMR aktif.
+     * Susun CSP: base dari config + nonce + source Vite dev bila lokal/HMR aktif
+     * + frame-ancestors/frame-src extra untuk Cloudflare Tunnel (best practice).
      */
     private function buildCsp(Request $request): string
     {
@@ -79,6 +80,13 @@ class SecurityHeaders
             // PR 28 hapus keduanya jadi 'nonce-xxx' saja → Livewire error. Keep unsafe-eval.
             $csp = str_replace("'unsafe-inline' 'unsafe-eval'", "'nonce-{$nonce}' 'unsafe-eval'", $csp);
             // Fallback bila format CSP berubah: ganti sisa unsafe-inline di style-src dengan nonce juga? ponytail: biarkan style-src unsafe-inline untuk Tailwind/Filament
+        }
+
+        // Sisipkan source tunnel untuk SOP preview iframe agar tidak terblok
+        // saat APP_URL quick tunnel berganti hostname.
+        $extra = $this->resolveFrameAncestorsExtra();
+        if ($extra !== '') {
+            $csp = $this->injectFrameSrc($csp, $extra);
         }
 
         if (! $this->isViteDevActive()) {
@@ -96,6 +104,38 @@ class SecurityHeaders
             '$1 '.$devSources.'$2',
             $csp,
         );
+    }
+
+    /**
+     * Source tambahan untuk frame-ancestors/frame-src.
+     * Env eksplisit diutamakan; fallback otomatis untuk local trycloudflare.
+     */
+    private function resolveFrameAncestorsExtra(): string
+    {
+        $extra = trim((string) config('security.csp_frame_ancestors_extra', ''));
+
+        if ($extra !== '') {
+            return $extra;
+        }
+
+        // Auto-allow wildcard tunnel hanya saat lokal + APP_URL mengandung trycloudflare.com
+        // — produksi tetap strict 'self' bila env tidak diisi.
+        if (app()->isLocal() && str_contains((string) config('app.url'), 'trycloudflare.com')) {
+            return 'https://*.trycloudflare.com';
+        }
+
+        return '';
+    }
+
+    /**
+     * Sisipkan extra source ke frame-src dan frame-ancestors.
+     */
+    private function injectFrameSrc(string $csp, string $extra): string
+    {
+        $csp = preg_replace('/(frame-src[^;]+)(;)/', '$1 '.$extra.'$2', $csp) ?? $csp;
+        $csp = preg_replace('/(frame-ancestors[^;]*)(;?)$/', '$1 '.$extra.'$2', $csp) ?? $csp;
+
+        return $csp;
     }
 
     /**
